@@ -6,7 +6,7 @@ jobs:
   build:
     strategy:
       matrix:
-        platform: [ windows-latest, ubuntu-latest ]
+        platform: [ ubuntu-latest ] #TODO: [ windows-latest, ubuntu-latest ] 
     
     runs-on:
       ${{matrix.platform}}
@@ -18,20 +18,20 @@ jobs:
       - name: Configure dependencies
         if: runner.os == 'Linux'
         run: sudo apt update && sudo apt install -y build-essential gcc-multilib g++-multilib
-      - name: Configure dependencies
-        if: runner.os == 'Windows'
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: x86
-          sdk: 8.1
-          toolset: 12.0
+      #- name: Configure dependencies
+      #  if: runner.os == 'Windows'
+      #  uses: ilammy/msvc-dev-cmd@v1
+      #  with:
+      #    arch: x86
+      #    sdk: 8.1
+      #    toolset: 12.0
 
       - name: Create project
         if: runner.os == 'Linux'
         run: cd src && sudo devtools/bin/vpc /vectronic +game /mksln games
-      - name: Create project
-        if: runner.os == 'Windows'
-        run: cd src;devtools/bin/vpc.exe  /vectronic +game /mksln games.sln /2013
+      #- name: Create project
+      #  if: runner.os == 'Windows'
+      #  run: cd src;devtools/bin/vpc.exe /vectronic /2013 +game /mksln games.sln
       
       - name: Download Steam runtime
         if: runner.os == 'Linux'
@@ -51,13 +51,12 @@ jobs:
           cd src && sudo make -f games.mak
         env:
           STEAM_RUNTIME_PATH: /valve/steam-runtime
-      - name: Build project
-        if: runner.os == 'Windows'
-        run: cd src;msbuild games.sln
+      #- name: Build project
+      #  if: runner.os == 'Windows'
+      #  run: cd src;msbuild games.sln
 
       - name: Upload product
         uses: actions/upload-artifact@v2
         with:
           name: vectronic
-      #    path: game/vectronic/bin
-          path: game/vectronic
+          path: game/vectronic/bin
