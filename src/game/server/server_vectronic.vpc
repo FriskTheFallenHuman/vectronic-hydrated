@@ -1,0 +1,105 @@
+//-----------------------------------------------------------------------------
+//	SERVER_VECTRONIC.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro GAMENAME 	"vectronic"
+
+$Include "$SRCDIR\game\server\server_base.vpc"
+$Include "$SRCDIR\game\server\nav_mesh.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories	"$BASE;.\vectronic;$SRCDIR\game\shared\vectronic;$SRCDIR\game\shared\multiplayer"
+		$PreprocessorDefinitions		"$BASE;VECTRONIC_DLL;GLOWS_ENABLE;USES_SAVERESTORE"
+	}
+}
+
+$Project "Server (Vectronic)"
+{
+	$Folder	"Source Files"
+	{
+		$File	"ai_eventresponse.cpp"
+		$File	"ai_eventresponse.h"
+		$File	"ai_relationship.cpp"
+		$File	"basegrenade_concussion.cpp"
+		$File	"basegrenade_contact.cpp"
+		$File	"basegrenade_timed.cpp"
+		$File	"EntityFlame.h"
+		$File	"grenadethrown.cpp"
+		$File	"grenadethrown.h"
+		$File	"h_cycler.cpp"
+		$File	"h_cycler.h"
+		$File	"logic_achievement.cpp"
+		$File	"monstermaker.cpp"
+		$File	"monstermaker.h"
+		$File	"physics_bone_follower.h"
+		$File	"$SRCDIR\game\shared\ragdoll_shared.h"
+		$File	"$SRCDIR\game\shared\solidsetdefaults.h"
+		$File	"team_spawnpoint.cpp"
+		$File	"team_spawnpoint.h"
+		$File	"$SRCDIR\game\shared\touchlink.h"
+		$File	"vehicle_choreo_generic.cpp"
+		$File	"$SRCDIR\game\shared\vehicle_choreo_generic_shared.h"
+		$File	"$SRCDIR\game\shared\weapon_parse_default.cpp"
+		$File	"$SRCDIR\game\shared\predicted_viewmodel.cpp"
+		$File	"$SRCDIR\game\shared\predicted_viewmodel.h"
+
+		$File	"weight_button.cpp"
+		$File	"weapon_cubemap.cpp"
+
+		$Folder "Vectronic"
+		{
+			$Folder "Shared"
+			{
+				$Folder	Weapons
+				{
+					$File	"$SRCDIR\game\shared\vectronic\basevectroniccombatweapon_shared.cpp"
+					$File	"$SRCDIR\game\shared\vectronic\basevectroniccombatweapon_shared.h"
+					$File	"$SRCDIR\game\shared\vectronic\weapon_vecgun.cpp"
+					$File	"$SRCDIR\game\shared\vectronic\weapon_vecgun.h"
+				}
+
+				$File	"$SRCDIR\game\shared\vectronic\vectronic_gamemovement.cpp"
+				$File	"$SRCDIR\game\shared\vectronic\vectronic_gamerules.h"
+				$File	"$SRCDIR\game\shared\vectronic\vectronic_gamerules.cpp"
+				$File	"$SRCDIR\game\shared\vectronic\vectronic_shareddefs.h"
+				$File	"$SRCDIR\game\shared\vectronic\vectronic_usermessages.cpp"
+				$File	"$SRCDIR\game\shared\vectronic\vectronic_player_shared.cpp"
+				$File	"$SRCDIR\game\shared\vectronic\vectronic_player_shared.h"
+				$File	"$SRCDIR\game\shared\Multiplayer\multiplayer_animstate.cpp"
+				$File	"$SRCDIR\game\shared\Multiplayer\multiplayer_animstate.h"
+				$File	"$SRCDIR\game\shared\vectronic\vectronic_playeranimstate.cpp"
+				$File	"$SRCDIR\game\shared\vectronic\vectronic_playeranimstate.h"
+			}
+
+			$File	"vectronic\baseglowanimating.cpp"
+			$File	"vectronic\baseglowanimating.h"			
+			$File	"vectronic\func_laser_receiver.cpp"
+			$File	"vectronic\func_solidity.cpp"
+			$File	"vectronic\player_pickup_controller.cpp"
+			$File	"vectronic\player_pickup_controller.h"
+			$File	"vectronic\prop_button.cpp"
+			$File	"vectronic\prop_indicator_panel.cpp"
+			$File	"vectronic\prop_vecball_dispenser.cpp"
+			$File	"vectronic\prop_vecball_dispenser.h"
+			$File	"vectronic\prop_vecball_launcher.cpp"
+			$File	"vectronic\prop_laser_emitter.cpp"
+			$File	"vectronic\prop_vecbox.cpp"
+			$File	"vectronic\prop_vecbox.h"
+			$File	"vectronic\prop_vectronic_projectile.cpp"
+			$File	"vectronic\prop_vectronic_projectile.h"
+			$File	"vectronic\vectronic_client.cpp"
+			$File	"vectronic\vectronic_gameinterface.cpp"
+			$File	"vectronic\vectronic_eventlog.cpp"
+			$File	"vectronic\vectronic_player.cpp"
+			$File	"vectronic\vectronic_player.h"
+			$File	"vectronic\vectronic_playermove.cpp"
+			$File	"vectronic\vectronic_triggers.cpp"
+		}
+	}
+}

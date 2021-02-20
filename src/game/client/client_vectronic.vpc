@@ -1,0 +1,88 @@
+//-----------------------------------------------------------------------------
+//	CLIENT_VECTRONIC.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro GAMENAME 	"vectronic"
+
+$Include "$SRCDIR\game\client\client_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories	"$BASE;.\vectronic;.\vectronic\vgui;$SRCDIR\game\shared\vectronic;$SRCDIR\game\shared\multiplayer"
+		$PreprocessorDefinitions		"$BASE;VECTRONIC_DLL;GLOWS_ENABLE"
+	}
+}
+
+$Project "Client (Vectronic)"
+{
+	$Folder "Source Files"
+	{
+		$File	"c_team_objectiveresource.cpp"
+		$File	"c_team_objectiveresource.h"
+		$File	"$SRCDIR\game\shared\predicted_viewmodel.cpp"
+		$File	"$SRCDIR\game\shared\predicted_viewmodel.h"
+		$File	"hud_voicestatus.cpp"
+		$File	"bsp_utils.cpp"
+		$File	"bsp_utils.h"
+
+		$Folder	"Vectronic"
+		{
+			$Folder "Shared"
+			{
+				$Folder	Weapons
+				{
+					$File	"$SRCDIR\game\shared\vectronic\basevectroniccombatweapon_shared.cpp"
+					$File	"$SRCDIR\game\shared\vectronic\basevectroniccombatweapon_shared.h"
+					$File	"$SRCDIR\game\shared\vectronic\weapon_vecgun.cpp"
+					$File	"$SRCDIR\game\shared\vectronic\weapon_vecgun.h"
+				}
+
+				$File	"$SRCDIR\game\shared\vectronic\vectronic_gamemovement.cpp"
+				$File	"$SRCDIR\game\shared\vectronic\vectronic_gamerules.h"
+				$File	"$SRCDIR\game\shared\vectronic\vectronic_gamerules.cpp"
+				$File	"$SRCDIR\game\shared\vectronic\vectronic_shareddefs.h"
+				$File	"$SRCDIR\game\shared\vectronic\vectronic_usermessages.cpp"
+				$File	"$SRCDIR\game\shared\vectronic\vectronic_player_shared.cpp"
+				$File	"$SRCDIR\game\shared\vectronic\vectronic_player_shared.h"
+				$File	"$SRCDIR\game\shared\Multiplayer\multiplayer_animstate.cpp"
+				$File	"$SRCDIR\game\shared\Multiplayer\multiplayer_animstate.h"
+				$File	"$SRCDIR\game\shared\vectronic\vectronic_playeranimstate.cpp"
+				$File	"$SRCDIR\game\shared\vectronic\vectronic_playeranimstate.h"
+			}
+
+			$Folder "HUD"
+			{
+				$File	"vectronic\hud_vectronic_quickinfo.cpp"
+				$File	"vectronic\hud_vectronic_quickinfo.h"
+				$File	"vectronic\hud_vectronic_chat.cpp"
+				$File	"vectronic\hud_vectronic_chat.h"
+				$File	"vectronic\hud_vectronic_target_id.cpp"
+				$File	"vectronic\hud_ball_icons.cpp"
+				$File	"vectronic\hud_buildinfo.cpp"
+				$File	"vectronic\hud_damageindicator.cpp"
+				$File	"vectronic\hud_weaponselection.cpp"
+				$File	"vectronic\hud_health.cpp"
+				$File	"vectronic\vgui_rootpanel_vectronic.cpp"
+			}
+
+			$File	"vectronic\c_baseglowanimating.cpp"
+			$File	"vectronic\c_baseglowanimating.h"
+			$File	"vectronic\clientmode_vectronic.h"
+			$File	"vectronic\clientmode_vectronic.cpp"
+			$File	"vectronic\vectronic_fx.cpp"
+			$File	"vectronic\vectronic_in_main.cpp"
+			$File	"vectronic\vectronic_prediction.cpp"
+			$File	"vectronic\c_prop_vectronic_projectile.cpp"
+			$File	"vectronic\c_prop_vectronic_projectile.h"
+			$File	"vectronic\c_prop_vecbox.cpp"
+			$File	"vectronic\c_prop_vecbox.h"
+			$File	"vectronic\c_vectronic_player.h"
+			$File	"vectronic\c_vectronic_player.cpp"
+		}
+	}
+}
