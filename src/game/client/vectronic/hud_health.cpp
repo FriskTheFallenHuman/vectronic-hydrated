@@ -2,20 +2,18 @@
 //
 // Purpose: 
 //
-// $NoKeywords: $
-//
 //=============================================================================//
 #include "cbase.h"
 #include "hud.h"
 #include "hud_macros.h"
 #include "view.h"
 #include "iclientmode.h"
-#include "c_vectronic_player.h"
 #include <KeyValues.h>
 #include <vgui/ISurface.h>
 #include <vgui/ISystem.h>
 #include <vgui_controls/AnimationController.h>
 #include <vgui/ILocalize.h>
+#include "c_baseplayer.h"
 #include "hudelement.h"
 #include "hud_numericdisplay.h"
 #include "convar.h"
@@ -25,7 +23,7 @@
 
 using namespace vgui;
 
-#define HEALTH_INIT 80 
+#define INIT_HEALTH -1
 
 //-----------------------------------------------------------------------------
 // Purpose: Health panel
@@ -36,7 +34,6 @@ class CHudHealth : public CHudElement, public CHudNumericDisplay
 
 public:
 	CHudHealth( const char *pElementName );
-
 	virtual void ApplySchemeSettings( IScheme *scheme );
 	virtual void Init( void );
 	virtual void VidInit( void );
@@ -44,32 +41,24 @@ public:
 	virtual void OnThink();
 			void MsgFunc_Damage( bf_read &msg );
 
+	virtual void Paint();
+	virtual void PaintBackground() {};
+
+	float GetLerpedHealth();
+
+	CPanelAnimationVarAliasType( float, m_flHealthLerpTime, "HealthLerpTime", "0.25", "float" );
+
 private:
-	CHudTexture *m_pHealthIcon;
+	int     m_iOldHealth;
+	int     m_iHealth;
+	float   m_flLastHealthChange;
 
-	CPanelAnimationVarAliasType( float, icon_xpos, "icon_xpos", "0", "proportional_float" );
-	CPanelAnimationVarAliasType( float, icon_ypos, "icon_ypos", "2", "proportional_float" );
-	CPanelAnimationVar( int, m_iHealthDisabledAlpha, "BarDisabledAlpha", "50");
-	CPanelAnimationVarAliasType( float, m_flBarInsetX, "BarInsetX", "26", "proportional_float" );
-	CPanelAnimationVarAliasType( float, m_flBarInsetY, "BarInsetY", "3", "proportional_float" );
-	CPanelAnimationVarAliasType( float, m_flBarWidth, "BarWidth", "84", "proportional_float" );
-	CPanelAnimationVarAliasType( float, m_flBarHeight, "BarHeight", "4", "proportional_float" );
-	CPanelAnimationVarAliasType( float, m_flBarChunkWidth, "BarChunkWidth", "2", "proportional_float" );
-	CPanelAnimationVarAliasType( float, m_flBarChunkGap, "BarChunkGap", "1", "proportional_float" );
-
-	// old variables
-	int		m_iHealth;
-	Color	 m_HealthColor;
 	int		m_bitsDamage;
 
-	float m_flHealth;
-	int m_nHealthLow;
+	CHudTexture* m_pHeart;
 	float icon_tall;
 	float icon_wide;
-
-protected:
-	virtual void Paint();
-};	
+};
 
 DECLARE_HUDELEMENT( CHudHealth );
 DECLARE_HUD_MESSAGE( CHudHealth, Damage );
@@ -80,14 +69,24 @@ DECLARE_HUD_MESSAGE( CHudHealth, Damage );
 CHudHealth::CHudHealth( const char *pElementName ) : CHudElement( pElementName ), CHudNumericDisplay( NULL, "HudHealth" )
 {
 	SetHiddenBits( HIDEHUD_HEALTH | HIDEHUD_PLAYERDEAD );
-	SetPaintBackgroundEnabled( false );
 }
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CHudHealth::ApplySchemeSettings( IScheme *scheme )
 {
 	BaseClass::ApplySchemeSettings( scheme );
+
+	if ( !m_pHeart )
+		m_pHeart = gHUD.GetIcon( "hud_heart" );
+
+	if ( m_pHeart )
+	{
+		icon_tall = GetTall() - YRES(2);
+		float scale = icon_tall / (float)m_pHeart->Height();
+		icon_wide = (scale)* (float)m_pHeart->Width();
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -104,21 +103,12 @@ void CHudHealth::Init()
 //-----------------------------------------------------------------------------
 void CHudHealth::Reset()
 {
-	m_flHealth = HEALTH_INIT;
+	m_iHealth = INIT_HEALTH;
+	m_iOldHealth = INIT_HEALTH;
+	m_flLastHealthChange = -1;
+	m_bitsDamage = 0;
 
-	m_nHealthLow = -1;
-	m_HealthColor = GetFgColor();
-
-	if ( !m_pHealthIcon )
-		m_pHealthIcon = gHUD.GetIcon( "item_healthkit" );
-
-	if ( m_pHealthIcon )
-	{
-
-		icon_tall = GetTall() - YRES(2);
-		float scale = icon_tall / (float)m_pHealthIcon->Height();
-		icon_wide = (scale)* (float)m_pHealthIcon->Width();
-	}
+	SetDisplayValue( m_iHealth );
 }
 
 //-----------------------------------------------------------------------------
@@ -134,58 +124,30 @@ void CHudHealth::VidInit()
 //-----------------------------------------------------------------------------
 void CHudHealth::OnThink()
 {
-	float newHealth = 0;
-
-	C_VectronicPlayer *local = C_VectronicPlayer::GetLocalVectronicPlayer();
-	if ( !local )
-		return;
-
-	// Never below zero 
-	newHealth = max(local->GetHealth(), 0);
+	int newHealth = 0;
+	C_BasePlayer *local = C_BasePlayer::GetLocalPlayer();
+	if ( local )
+		newHealth = MAX( local->GetHealth(), 0 );	// Never below zero
 
 	// Only update the fade if we've changed health
-	if ( newHealth == m_flHealth )
+	if ( newHealth == m_iHealth )
 		return;
 
-	m_flHealth = newHealth;
+	m_iOldHealth = GetLerpedHealth();
+	m_iHealth = newHealth;
+	m_flLastHealthChange = gpGlobals->curtime;
 
-	if ( newHealth >= 20)
-		surface()->DrawSetColor( m_HealthColor );
-	else if ( newHealth > 0 )
-		surface()->DrawSetColor( 255, 0, 0, 255 );
-}
-
-//------------------------------------------------------------------------
-// Purpose: draws the power bar
-//------------------------------------------------------------------------
-void CHudHealth::Paint()
-{
-	// Get bar chunks
-	int chunkCount = m_flBarWidth / (m_flBarChunkWidth + m_flBarChunkGap);
-	int enabledChunks = (int)((float)chunkCount * (m_flHealth / 100.0f) + 0.5f);
-
-	// Draw the suit power bar
-	surface()->DrawSetColor( m_HealthColor );
-
-	int xpos = m_flBarInsetX, ypos = m_flBarInsetY;
-
-	for ( int i = 0; i < enabledChunks; i++ )
+	if ( m_iHealth >= 20 )
 	{
-		surface()->DrawFilledRect( xpos, ypos, xpos + m_flBarChunkWidth, ypos + m_flBarHeight );
-		xpos += ( m_flBarChunkWidth + m_flBarChunkGap );
+		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "HealthIncreasedAbove20" );
+	}
+	else if ( m_iHealth > 0 )
+	{
+		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "HealthIncreasedBelow20" );
+		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "HealthLow" );
 	}
 
-	// Draw the exhausted portion of the bar.
-	surface()->DrawSetColor( Color( m_HealthColor[0], m_HealthColor[1], m_HealthColor[2], m_iHealthDisabledAlpha ) );
-
-	for ( int i = enabledChunks; i < chunkCount; i++ )
-	{
-		surface()->DrawFilledRect( xpos, ypos, xpos + m_flBarChunkWidth, ypos + m_flBarHeight );
-		xpos += ( m_flBarChunkWidth + m_flBarChunkGap );
-	}
-
-	if ( m_pHealthIcon )
-		m_pHealthIcon->DrawSelf( icon_xpos, icon_ypos, icon_wide, icon_tall, GetFgColor() );
+	SetDisplayValue( m_iHealth );
 }
 
 //-----------------------------------------------------------------------------
@@ -193,25 +155,84 @@ void CHudHealth::Paint()
 //-----------------------------------------------------------------------------
 void CHudHealth::MsgFunc_Damage( bf_read &msg )
 {
-
-	int armor = msg.ReadByte();	// armor
 	int damageTaken = msg.ReadByte();	// health
-	long bitsDamage = msg.ReadLong(); // damage bits
-	bitsDamage; // variable still sent but not used
 
 	Vector vecFrom;
 
-	vecFrom.x = msg.ReadBitCoord();
-	vecFrom.y = msg.ReadBitCoord();
-	vecFrom.z = msg.ReadBitCoord();
+	msg.ReadBitVec3Coord( vecFrom );
+
+	Assert( msg.GetNumBytesLeft() == 0 );
 
 	// Actually took damage?
-	if ( damageTaken > 0 || armor > 0 )
+	if ( damageTaken > 0 )
 	{
-		if ( damageTaken > 0 )
-		{
-			// start the animation
-			g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "HealthDamageTaken" );
-		}
+		// start the animation
+		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "HealthDamageTaken" );
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CHudHealth::Paint()
+{
+	C_BasePlayer *pPlayer = C_BasePlayer::GetLocalPlayer();
+	if ( !pPlayer )
+		return;
+
+	if (!pPlayer->IsAlive())
+		return;
+
+	surface()->DrawSetColor( Color( 0, 0, 0, 180 ) );
+	surface()->DrawFilledRect( 0, 0, 1000, 1000 );
+
+	int iElementBuffer = 12;	// The entire element gets a stencil crop, so leave some buffer room on the outsides so that the blood splatters can overflow.
+	int iWidth, iHeight;
+	GetSize( iWidth, iHeight );
+	iWidth -= iElementBuffer*2;
+	iHeight -= iElementBuffer*2;
+
+	float flMargin = 5;
+
+	float flHeartHeight = GetTall() - flMargin*2;
+
+	if ( m_pHeart )
+		m_pHeart->DrawSelf( flMargin, flMargin, icon_wide, icon_tall, Color( 255, 255, 255, 255 ) );
+
+	float flBarWidth = GetWide() - flMargin*3 - flHeartHeight;
+	float flBarHeight = 4;
+
+	float flHurtLerpTime = RemapValClamped( m_iOldHealth - m_iHealth, 10, 50, m_flHealthLerpTime, m_flHealthLerpTime*3 );
+	float flHurtAlpha = RemapValClamped( gpGlobals->curtime, m_flLastHealthChange, m_flLastHealthChange + flHurtLerpTime, 1, 0 );
+	float flHurtPercent = Clamp( (float)m_iOldHealth/100, 0.0f, 1.0f );
+
+	float flHealthPercent = Clamp( (float)GetLerpedHealth() / 100, 0.0f, 1.0f );
+
+	if ( flHurtAlpha && flHealthPercent < flHurtPercent )
+	{
+		float flHurtBarHeight = RemapValClamped( gpGlobals->curtime, m_flLastHealthChange, m_flLastHealthChange + flHurtLerpTime, GetTall(), flBarHeight );
+
+		surface()->DrawSetColor( Color( 255, 0, 0, flHurtAlpha*255 ) );
+		surface()->DrawFilledRect( flMargin*2 + flHeartHeight + flHealthPercent * flBarWidth, GetTall()/2-flHurtBarHeight/2, flMargin*2 + flHeartHeight + flHurtPercent * flBarWidth, GetTall()/2+flHurtBarHeight/2 );
+	}
+
+	surface()->DrawSetColor( Color( 255, 255, 255, 255 ) );
+	surface()->DrawFilledRect( flMargin*2 + flHeartHeight, GetTall()/2-flBarHeight/2, flMargin*2 + flHeartHeight + flHealthPercent * flBarWidth, GetTall()/2+flBarHeight/2 );
+
+	float flOverhealPercent = RemapValClamped( (float)GetLerpedHealth(), 100, 150, 0.0f, 1.0f );
+	if (flOverhealPercent)
+	{
+		surface()->DrawSetColor( Color( 255, 190, 20, 128 ) );
+		surface()->DrawFilledRect( flMargin*2 + flHeartHeight, flMargin, flMargin*2 + flHeartHeight + flOverhealPercent * flBarWidth, GetTall() - flMargin );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CHudHealth::GetLerpedHealth()
+{
+	float flHealthLerp = RemapValClamped( gpGlobals->curtime, m_flLastHealthChange, m_flLastHealthChange + m_flHealthLerpTime, 0, 1 );
+	flHealthLerp = Bias( flHealthLerp, 0.8f );
+	return RemapValClamped( flHealthLerp, 0, 1, m_iOldHealth, m_iHealth );
 }

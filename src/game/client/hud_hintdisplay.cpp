@@ -35,7 +35,10 @@ public:
 	void Reset();
 	void MsgFunc_HintText( bf_read &msg );
 	void FireGameEvent( IGameEvent * event);
-
+#ifdef VECTRONIC_DLL
+	virtual void PaintBackground( void );
+	int	 DrawSmearBackgroundFade( int x, int y, int wide, int tall );
+#endif
 	bool SetHintText( wchar_t *text );
 	void LocalizeAndDisplay( const char *pszHudTxtMsg, const char *szRawString );
 
@@ -104,10 +107,14 @@ void CHudHintDisplay::ApplySchemeSettings( vgui::IScheme *pScheme )
 {
 	BaseClass::ApplySchemeSettings( pScheme );
 
+#ifndef VECTRONIC_DLL
 	SetFgColor( GetSchemeColor("HintMessageFg", pScheme) );
+#endif
 	m_hFont = pScheme->GetFont( "HudHintText", true );
+#ifndef VECTRONIC_DLL
 	m_pLabel->SetBgColor( GetSchemeColor("HintMessageBg", pScheme) );
 	m_pLabel->SetPaintBackgroundType( 2 );
+#endif
 	m_pLabel->SetSize( 0, GetTall() );		// Start tiny, it'll grow.
 }
 
@@ -339,8 +346,63 @@ void CHudHintDisplay::LocalizeAndDisplay( const char *pszHudTxtMsg, const char *
 	}
 }
 
+#ifdef VECTRONIC_DLL
+#define TOP_BORDER_HEIGHT		21
+#define BOTTOM_BORDER_HEIGHT	21
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+int CHudHintDisplay::DrawSmearBackgroundFade( int x0, int y0, int x1, int y1 )
+{
+	int wide = x1 - x0;
+	int tall = y1 - y0;
 
+	int topTall = vgui::scheme()->GetProportionalScaledValue( TOP_BORDER_HEIGHT );
+	int bottomTall = vgui::scheme()->GetProportionalScaledValue( BOTTOM_BORDER_HEIGHT );
 
+	float f1 = 0.05f;
+	float f2 = 0.40f;
+
+	topTall  = 1.00f * topTall;
+	bottomTall = 1.00f * bottomTall;
+
+	int middleTall = tall - ( topTall + bottomTall );
+	if ( middleTall < 0 )
+	{
+		middleTall = 0;
+	}
+
+	vgui::surface()->DrawSetColor( Color( 0, 0, 0, 128 ) );
+
+	y0 += topTall;
+
+	if ( middleTall )
+	{
+		// middle
+		vgui::surface()->DrawFilledRectFade( x0, y0, x0 + f1*wide, y0 + middleTall, 0, 255, true );
+		vgui::surface()->DrawFilledRectFade( x0 + f1*wide, y0, x0 + f2*wide, y0 + middleTall, 255, 255, true );
+		vgui::surface()->DrawFilledRectFade( x0 + f2*wide, y0, x0 + wide, y0 + middleTall, 255, 0, true );
+		y0 += middleTall;
+	}
+
+	return topTall + middleTall + bottomTall;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CHudHintDisplay::PaintBackground( void )
+{
+	//BaseClass::PaintBackground();
+
+	DrawSmearBackgroundFade( 
+		0, 
+		-vgui::scheme()->GetProportionalScaledValue( 20 ), 
+		GetWide(), 
+		GetTall() ); 
+
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Displays small key-centric hints on the right hand side of the screen
@@ -355,7 +417,10 @@ public:
 	void Reset();
 	void MsgFunc_KeyHintText( bf_read &msg );
 	bool ShouldDraw();
-
+#ifdef VECTRONIC_DLL
+	virtual void PaintBackground( void );
+	int	 DrawSmearBackgroundFade( int x, int y, int wide, int tall );
+#endif
 	bool SetHintText( const char *text );
 
 protected:
@@ -788,3 +853,61 @@ void CHudHintKeyDisplay::MsgFunc_KeyHintText( bf_read &msg )
 		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( "KeyHintMessageHide" ); 
 	}
 }
+
+#ifdef VECTRONIC_DLL
+#define TOP_BORDER_HEIGHT		21
+#define BOTTOM_BORDER_HEIGHT	21
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+int CHudHintKeyDisplay::DrawSmearBackgroundFade( int x0, int y0, int x1, int y1 )
+{
+	int wide = x1 - x0;
+	int tall = y1 - y0;
+
+	int topTall = vgui::scheme()->GetProportionalScaledValue( TOP_BORDER_HEIGHT );
+	int bottomTall = vgui::scheme()->GetProportionalScaledValue( BOTTOM_BORDER_HEIGHT );
+
+	float f1 = 0.05f;
+	float f2 = 0.40f;
+
+	topTall  = 1.00f * topTall;
+	bottomTall = 1.00f * bottomTall;
+
+	int middleTall = tall - ( topTall + bottomTall );
+	if ( middleTall < 0 )
+	{
+		middleTall = 0;
+	}
+
+	vgui::surface()->DrawSetColor( Color( 0, 0, 0, 128 ) );
+
+	y0 += topTall;
+
+	if ( middleTall )
+	{
+		// middle
+		vgui::surface()->DrawFilledRectFade( x0, y0, x0 + f1*wide, y0 + middleTall, 0, 255, true );
+		vgui::surface()->DrawFilledRectFade( x0 + f1*wide, y0, x0 + f2*wide, y0 + middleTall, 255, 255, true );
+		vgui::surface()->DrawFilledRectFade( x0 + f2*wide, y0, x0 + wide, y0 + middleTall, 255, 0, true );
+		y0 += middleTall;
+	}
+
+	return topTall + middleTall + bottomTall;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CHudHintKeyDisplay::PaintBackground( void )
+{
+	//BaseClass::PaintBackground();
+
+	DrawSmearBackgroundFade( 
+		0, 
+		-vgui::scheme()->GetProportionalScaledValue( 20 ), 
+		GetWide(), 
+		GetTall() + 50 ); 
+
+}
+#endif
