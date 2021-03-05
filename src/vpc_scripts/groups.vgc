@@ -16,4 +16,5 @@ $Group "game"
 	"server"
 	"tier1"
 	"vgui_controls"
+	"gameui"
 }
