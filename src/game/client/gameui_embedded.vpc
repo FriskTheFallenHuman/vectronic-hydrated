@@ -1,0 +1,133 @@
+//-----------------------------------------------------------------------------
+//	GAMEUI_EMBEDDED.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories	"$BASE;.\gameui;.\gameui\vectronic;.\gameui\controls"
+		$PreprocessorDefinitions		"$BASE;GAMEUI_EXPORTS;GAMEUI_EMBEDDED;GAMEUI_DLL"
+	}
+}
+
+$Project
+{
+	$Folder	"Source Files"
+	{
+		$Folder	"GameUI - Embedded"
+		{
+			$Folder	"Base GameUI"
+			{
+				$File	"vgui_video_player.cpp"
+
+				$File	"gameui\BitmapImagePanel.cpp" \
+						"gameui\CommandCheckButton.cpp" \
+						"gameui\CvarNegateCheckButton.cpp" \
+						"gameui\CvarSlider.cpp" \
+						"gameui\CvarTextEntry.cpp" \
+						"gameui\CvarToggleCheckButton.cpp" \
+						"gameui\GameConsole.cpp" \
+						"gameui\GameConsoleDialog.cpp" \
+						"gameui\GameUI_Interface.cpp" \
+						"gameui\KeyToggleCheckButton.cpp" \
+						"gameui\LabeledCommandComboBox.cpp" \
+						"gameui\LoadingDialog.cpp" \
+						"gameui\ModInfo.cpp" \
+						"gameui\MouseMessageForwardingPanel.cpp" \
+						"gameui\MultiplayerAdvancedDialog.cpp" \
+						"gameui\OptionsDialog.cpp" \
+						"gameui\OptionsSubAudio.cpp" \
+						"gameui\OptionsSubKeyboard.cpp" \
+						"gameui\OptionsSubMouse.cpp" \
+						"gameui\OptionsSubMultiplayer.cpp" \
+						"gameui\OptionsSubVideo.cpp" \
+						"gameui\OptionsSubVoice.cpp" \
+						"gameui\PanelListPanel.cpp" \
+						"gameui\PlayerListDialog.cpp" \
+						"gameui\RunGameEngine.cpp" \
+						"gameui\ScriptObject.cpp" \
+						"gameui\Sys_Utils.cpp" \
+						"gameui\TextEntryBox.cpp" \
+						"gameui\TGAImagePanel.cpp" \
+						"gameui\URLButton.cpp" \
+						"gameui\VControlsListPanel.cpp" \
+						"gameui\VGuiSystemModuleLoader.cpp" \
+						"$SRCDIR\common\language.cpp" \
+						"$SRCDIR\public\crtmemdebug.cpp" \
+						"$SRCDIR\public\filesystem_helpers.cpp" \
+						"$SRCDIR\common\randoverride.cpp" \
+						"$SRCDIR\public\vgui_controls\vgui_controls.cpp"
+				{
+					$Configuration
+					{
+						$Compiler
+						{
+							$Create/UsePrecompiledHeader	"Not Using Precompiled Headers"
+						}
+					}
+				}	
+			}
+			
+			$Folder	"Vectronic GameUI"
+			{
+				$File	"gameui\vectronic\basemodframe.cpp"
+				$File	"gameui\vectronic\BaseModPanel.cpp"
+				$File	"gameui\vectronic\UIGameData.cpp"
+				$File	"gameui\vectronic\ui_defines.h"
+
+				$Folder	"VPanels"
+				{
+					$File	"gameui\vectronic\vachievements.cpp" \
+							"gameui\vectronic\vdropdownmenu.cpp" \
+							"gameui\vectronic\vflyoutmenu.cpp" \
+							"gameui\vectronic\vgenericconfirmation.cpp" \
+							"gameui\vectronic\vgenericpanellist.cpp" \
+							"gameui\vectronic\vhybridbutton.cpp" \
+							"gameui\vectronic\vingamemainmenu.cpp" \
+							"gameui\vectronic\vloadingprogress.cpp" \
+							"gameui\vectronic\vmainmenu.cpp" \
+							"gameui\vectronic\vmenubackground.cpp" \
+							"gameui\vectronic\vslidercontrol.cpp" \
+							"gameui\vectronic\vcreditsscreen.cpp" \
+							"gameui\vectronic\vcreategame.cpp" \
+							"gameui\vectronic\vcreategamegameplaypage.cpp" \
+							"gameui\vectronic\vcreategameserverpage.cpp" \
+							"gameui\vectronic\vblogpanel.cpp"
+				}
+				
+				$Folder	"Buttons"
+				{
+					$File	"gameui\vectronic\nb_header_footer.cpp"
+				}
+			}
+			
+			$Folder	"Controls"
+			{
+				$File	"gameui\controls\ExImageMenuButton.cpp"
+				$File	"gameui\controls\ExMenuButton.cpp"
+				$File	"gameui\controls\ExMenuImagePanel.cpp"
+				$File	"gameui\controls\ExMenuLabel.cpp"
+				$File	"gameui\controls\ExMenuRichText.cpp"
+			}
+		}
+	}
+
+	$Folder	"Public Header Files"
+	{
+		$File	"$SRCDIR\public\iachievementmgr.h"
+		$File	"$SRCDIR\public\game\client\IGameClientExports.h"
+		$File	"$SRCDIR\common\ServerBrowser\IServerBrowser.h"
+		$File	"$SRCDIR\common\GameUI\IGameUI.h"
+		$File	"$SRCDIR\public\IGameUIFuncs.h"
+		$File	"$SRCDIR\public\tier1\interface.h"
+		$File	"$SRCDIR\common\IRunGameEngine.h"
+		$File	"$SRCDIR\common\IVGuiModule.h"
+		$File	"$SRCDIR\common\IVGuiModuleLoader.h"
+		$File	"$SRCDIR\common\language.h"
+	}
+}

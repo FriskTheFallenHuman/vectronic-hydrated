@@ -32,6 +32,10 @@ obj*/
 !devtools/*.mak
 !utils/smdlexp/smdlexp.mak
 
+# GameUI Stub compile stuffs
+src/gameui/Release/*
+src/gameui/Debug/*
+
 # Specific Source build products
 client.pdb
 client.dll
@@ -52,9 +56,13 @@ client.dylib.dSYM/
 server.dylib
 server.dylib.dSYM/
 
+gameui.dylib
+gameui.dylib.dSYM/
+gameui.dylib
+gameui.dylib.dSYM/
+
 # Ignore the whole game folder
 game/*
 
 # shader files
 *.tmp
-

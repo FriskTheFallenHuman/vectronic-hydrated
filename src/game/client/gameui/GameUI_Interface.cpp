@@ -75,14 +75,10 @@ inline UI_BASEMOD_PANEL_CLASS & ConstructUiBaseModPanelClass() { return * new UI
 
 IVEngineClient *engine = NULL;
 IGameUIFuncs *gameuifuncs = NULL;
-CGlobalVarsBase *gpGlobals = NULL;
 IEngineSound *enginesound = NULL;
 ISoundEmitterSystemBase *soundemitterbase = NULL;
 IXboxSystem *xboxsystem = NULL;
 IVideoServices *g_pVideo = NULL;
-
-static CSteamAPIContext g_SteamAPIContext;
-CSteamAPIContext *steamapicontext = &g_SteamAPIContext;
 
 IEngineVGui *enginevguifuncs = NULL;
 vgui::ISurface *enginesurfacefuncs = NULL;
@@ -127,87 +123,6 @@ vgui::VPANEL GetGameUIBasePanel()
 }
 
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR(CGameUI, IGameUI, GAMEUI_INTERFACE_VERSION, g_GameUI);
-
-//-----------------------------------------------------------------------------
-// Purpose: Performs a var args printf into a static return buffer
-// Input  : *format - 
-//			... - 
-// Output : char
-//-----------------------------------------------------------------------------
-char *VarArgs(const char *format, ...)
-{
-	va_list		argptr;
-	static char		string[1024];
-
-	va_start(argptr, format);
-	Q_vsnprintf(string, sizeof(string), format, argptr);
-	va_end(argptr);
-
-	return string;
-}
-
-void GetHudSize( int& w, int &h )
-{
-	vgui::surface()->GetScreenSize(w, h);
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: ScreenHeight returns the height of the screen, in pixels
-// Output : int
-//-----------------------------------------------------------------------------
-int ScreenHeight(void)
-{
-	int w, h;
-	GetHudSize(w, h);
-	return h;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: ScreenWidth returns the width of the screen, in pixels
-// Output : int
-//-----------------------------------------------------------------------------
-int ScreenWidth(void)
-{
-	int w, h;
-	GetHudSize(w, h);
-	return w;
-}
-
-void UTIL_StringToIntArray( int *pVector, int count, const char *pString )
-{
-	char *pstr, *pfront, tempString[128];
-	int	j;
-
-	Q_strncpy( tempString, pString, sizeof(tempString) );
-	pstr = pfront = tempString;
-
-	for ( j = 0; j < count; j++ )			// lifted from pr_edict.c
-	{
-		pVector[j] = atoi( pfront );
-
-		while ( *pstr && *pstr != ' ' )
-			pstr++;
-		if (!*pstr)
-			break;
-		pstr++;
-		pfront = pstr;
-	}
-
-	for ( j++; j < count; j++ )
-	{
-		pVector[j] = 0;
-	}
-}
-
-void UTIL_StringToColor32( color32 *color, const char *pString )
-{
-	int tmp[4];
-	UTIL_StringToIntArray( tmp, 4, pString );
-	color->r = tmp[0];
-	color->g = tmp[1];
-	color->b = tmp[2];
-	color->a = tmp[3];
-}
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
@@ -394,9 +309,10 @@ void CGameUI::PlayGameStartupSound()
 	// did we find any?
 	if ( fileNames.Count() > 0 )
 	{
-		time_t t;
-		time(&t);
-		int index = t % fileNames.Count();
+		SYSTEMTIME SystemTime;
+		GetSystemTime( &SystemTime );
+		int index = SystemTime.wMilliseconds % fileNames.Count();
+
 		if ( fileNames.IsValidIndex( index ) && fileNames[index] )
 		{
 			char found[ 512 ];
