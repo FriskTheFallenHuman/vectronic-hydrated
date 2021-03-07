@@ -50,8 +50,11 @@ extern ConVar flashlight;
 // Show annotations?
 ConVar hud_show_annotations( "hud_show_annotations", "1" );
 
-// The delay from when we last got hurt to generate.
-ConVar sv_regeneration_wait_time ("sv_regeneration_wait_time", "1.0", FCVAR_REPLICATED );
+ConVar sv_regeneration ( "sv_regeneration", "1", FCVAR_REPLICATED | FCVAR_CHEAT );
+ConVar sv_regeneration_wait_time ( "sv_regeneration_wait_time", "1.0", FCVAR_REPLICATED | FCVAR_CHEAT );
+ConVar sv_regeneration_rate ( "sv_regeneration_rate", "0.5", FCVAR_REPLICATED | FCVAR_CHEAT );
+ConVar sv_regen_interval( "sv_regen_interval", "20", FCVAR_REPLICATED | FCVAR_CHEAT, "Set what interval of health to regen to.\n    i.e. if this is set to the default value (20), if you are damaged to 75 health, you'll regenerate to 80 health.\n    Set this to 0 to disable this mechanic.");
+ConVar sv_regen_limit( "sv_regen_limit", "0", FCVAR_REPLICATED | FCVAR_CHEAT, "Set the limit as to how much health you can regen to.\n    i.e. if this is set at 50, you can only regen to 50 health. If you are hurt and you are above 50 health, you will not regen.\n    Set this to 0 to disable this mechanic.");
 
 #define PUSHAWAY_THINK_CONTEXT	"VectronicPushawayThink"
 #define CYCLELATCH_UPDATE_INTERVAL	0.2f
@@ -207,6 +210,8 @@ CVectronicPlayer::CVectronicPlayer()
 	
 	// We did not fire any shots.
 	m_iShotsFired = 0;
+
+	m_fRegenRemander = 0;
 }
 
 CVectronicPlayer::~CVectronicPlayer( void )
@@ -581,27 +586,36 @@ void CVectronicPlayer::PostThink( void )
 		}
 	}
 
-	// Regenerate heath after 3 seconds
-	if ( IsAlive() && GetHealth() < GetMaxHealth() )
+	// Regenerate heath
+	if ( IsAlive() && GetHealth() < GetMaxHealth() && (sv_regeneration.GetInt() == 1) )
 	{
 		// Color to overlay on the screen while the player is taking damage
-		color32 hurtScreenOverlay = {64,0,0,64};
+		color32 hurtScreenOverlay = { 80, 0, 0, 64 };
 
 		if ( gpGlobals->curtime > m_fTimeLastHurt + sv_regeneration_wait_time.GetFloat() )
 		{
-			TakeHealth( 1, DMG_GENERIC );
-			m_bIsRegenerating = true;
-
-			if ( GetHealth() >= GetMaxHealth() )
+			// Regenerate based on rate, and scale it by the frametime
+			m_fRegenRemander += sv_regeneration_rate.GetFloat() * gpGlobals->frametime;
+		
+			if( m_fRegenRemander >= 1 )
 			{
-				m_bIsRegenerating = false;
+				//If the regen interval is set, and the health is evenly divisible by that interval, don't regen.
+				if ( sv_regen_interval.GetFloat() > 0 && floor(m_iHealth / sv_regen_interval.GetFloat()) == m_iHealth / sv_regen_interval.GetFloat() )
+					m_fRegenRemander = 0;
+				//If the regen limit is set, and the health is equal to or above the limit, don't regen.
+				else if ( sv_regen_limit.GetFloat() > 0 && m_iHealth >= sv_regen_limit.GetFloat() )
+					m_fRegenRemander = 0;
+				else 
+				{
+					TakeHealth( m_fRegenRemander, DMG_GENERIC );
+					m_fRegenRemander = 0;
+				}
 			}
 		}
 		else
 		{
-			m_bIsRegenerating = false;
 			UTIL_ScreenFade( this, hurtScreenOverlay, 1.0f, 0.1f, FFADE_IN|FFADE_PURGE );
-		}
+		}	
 	}
 
 	if ( IsAlive() && m_cycleLatchTimer.IsElapsed() )

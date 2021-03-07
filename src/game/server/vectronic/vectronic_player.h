@@ -159,8 +159,8 @@ public:
 	virtual void Event_Killed( const CTakeDamageInfo &info );
 
 	//Regenerate
-	float m_fTimeLastHurt;
-	bool  m_bIsRegenerating;		// Is the player currently regaining health
+	float	m_fRegenRemander;
+	float	m_fTimeLastHurt;
 
 	// CHEAT
 	virtual void CheatImpulseCommands( int iImpulse );
