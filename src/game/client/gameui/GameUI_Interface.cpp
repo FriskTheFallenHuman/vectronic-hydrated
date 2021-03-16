@@ -32,7 +32,6 @@
 #include "VGuiSystemModuleLoader.h"
 #include "bitmap/tgaloader.h"
 #include "GameConsole.h"
-#include "LoadingDialog.h"
 #include "ModInfo.h"
 #include "game/client/IGameClientExports.h"
 #include "materialsystem/imaterialsystem.h"
@@ -88,10 +87,6 @@ IGameEventManager2 *gameeventmanager = nullptr;
 class CGameUI;
 CGameUI *g_pGameUI = NULL;
 
-class CLoadingDialog;
-vgui::DHANDLE<CLoadingDialog> g_hLoadingDialog;
-vgui::VPANEL g_hLoadingBackgroundDialog = NULL;
-
 static CGameUI g_GameUI;
 
 #ifdef _WIN32
@@ -140,7 +135,6 @@ CGameUI::CGameUI()
 	m_bIsConsoleUI = false;
 	m_bHasSavedThisMenuSession = false;
 	m_bOpenProgressOnStart = false;
-	m_iPlayGameStartupSound = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -221,20 +215,13 @@ void CGameUI::Initialize( CreateInterfaceFn factory )
 	factoryBasePanel.SetParent( rootpanel );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 void CGameUI::PostInit()
 {
 	// to know once client dlls have been loaded
 	BaseModUI::CUIGameData::Get()->OnGameUIPostInit();
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Sets the specified panel as the background panel for the loading
-//		dialog.  If NULL, default background is used.  If you set a panel,
-//		it should be full-screen with an opaque background, and must be a VGUI popup.
-//-----------------------------------------------------------------------------
-void CGameUI::SetLoadingBackgroundDialog( vgui::VPANEL panel )
-{
-	g_hLoadingBackgroundDialog = panel;
 }
 
 //-----------------------------------------------------------------------------
@@ -401,7 +388,6 @@ void CGameUI::Start()
 		m_iFriendsLoadPauseFrames = 1;
 	}
 #endif
-	m_iPlayGameStartupSound = 2;
 }
 
 //-----------------------------------------------------------------------------
@@ -577,16 +563,6 @@ void CGameUI::RunFrame()
 
 	GetUiBaseModPanelClass().RunFrame();
 
-	// moved to mainmenu
-	// Play the start-up music the first time we run frame
-	/*if ( IsPC() && m_iPlayGameStartupSound > 0 )
-	{
-		m_iPlayGameStartupSound--;
-		if ( !m_iPlayGameStartupSound )
-		{
-			PlayGameStartupSound();
-		}
-	}*/
 #ifdef _WIN32
 	if ( IsPC() && m_bTryingToLoadFriends && m_iFriendsLoadPauseFrames-- < 1 && g_hMutex && g_hWaitMutex )
 	{
@@ -657,7 +633,9 @@ void CGameUI::OnConnectToServer2(const char *game, int IP, int connectionPort, i
 	SendConnectedToGameMessage();
 }
 
-
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 void CGameUI::SendConnectedToGameMessage()
 {
 	MEM_ALLOC_CREDIT();
@@ -669,8 +647,6 @@ void CGameUI::SendConnectedToGameMessage()
 	g_VModuleLoader.PostMessageToAllModules( kv );
 }
 
-
-
 //-----------------------------------------------------------------------------
 // Purpose: Called when the game disconnects from a server
 //-----------------------------------------------------------------------------
@@ -680,34 +656,7 @@ void CGameUI::OnDisconnectFromServer( uint8 eSteamLoginFailure )
 	m_iGameConnectionPort = 0;
 	m_iGameQueryPort = 0;
 
-	if ( g_hLoadingBackgroundDialog )
-	{
-		vgui::ivgui()->PostMessage( g_hLoadingBackgroundDialog, new KeyValues("DisconnectedFromGame"), NULL );
-	}
-
-	g_VModuleLoader.PostMessageToAllModules(new KeyValues("DisconnectedFromGame"));
-
-	if ( eSteamLoginFailure == STEAMLOGINFAILURE_NOSTEAMLOGIN )
-	{
-		if ( g_hLoadingDialog )
-		{
-			g_hLoadingDialog->DisplayNoSteamConnectionError();
-		}
-	}
-	else if ( eSteamLoginFailure == STEAMLOGINFAILURE_VACBANNED )
-	{
-		if ( g_hLoadingDialog )
-		{
-			g_hLoadingDialog->DisplayVACBannedError();
-		}
-	}
-	else if ( eSteamLoginFailure == STEAMLOGINFAILURE_LOGGED_IN_ELSEWHERE )
-	{
-		if ( g_hLoadingDialog )
-		{
-			g_hLoadingDialog->DisplayLoggedInElsewhereError();
-		}
-	}
+	g_VModuleLoader.PostMessageToAllModules( new KeyValues( "DisconnectedFromGame" ) );
 }
 
 //-----------------------------------------------------------------------------
@@ -721,12 +670,7 @@ void CGameUI::OnLevelLoadingStarted( bool bShowProgressDialog )
 	ShowLoadingBackgroundDialog();
 
 	if ( bShowProgressDialog )
-	{
 		StartProgressBar();
-	}
-
-	// Don't play the start game sound if this happens before we get to the first frame
-	m_iPlayGameStartupSound = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -741,10 +685,8 @@ void CGameUI::OnLevelLoadingFinished(bool bError, const char *failureReason, con
 
 	// Need to call this function in the Base mod Panel to let it know that we've finished loading the level
 	// This should fix the loading screen not disappearing.
-	GetUiBaseModPanelClass().OnLevelLoadingFinished(new KeyValues("LoadingFinished"));
+	GetUiBaseModPanelClass().OnLevelLoadingFinished( new KeyValues( "LoadingFinished" ) );
 	HideLoadingBackgroundDialog();
-
-
 }
 
 //-----------------------------------------------------------------------------
@@ -754,63 +696,6 @@ void CGameUI::OnLevelLoadingFinished(bool bError, const char *failureReason, con
 bool CGameUI::UpdateProgressBar(float progress, const char *statusText)
 {
 	return GetUiBaseModPanelClass().UpdateProgressBar(progress, statusText);
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CGameUI::SetProgressLevelName( const char *levelName )
-{
-	MEM_ALLOC_CREDIT();
-	if ( g_hLoadingBackgroundDialog )
-	{
-		KeyValues *pKV = new KeyValues( "ProgressLevelName" );
-		pKV->SetString( "levelName", levelName );
-		vgui::ivgui()->PostMessage( g_hLoadingBackgroundDialog, pKV, NULL );
-	}
-
-	if ( g_hLoadingDialog.Get() )
-	{
-		// TODO: g_hLoadingDialog->SetLevelName( levelName );
-	}
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CGameUI::StartProgressBar()
-{
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: returns true if the screen should be updated
-//-----------------------------------------------------------------------------
-bool CGameUI::ContinueProgressBar( float progressFraction )
-{
-	if (!g_hLoadingDialog.Get())
-		return false;
-
-	g_hLoadingDialog->Activate();
-	return g_hLoadingDialog->SetProgressPoint(progressFraction);
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: stops progress bar, displays error if necessary
-//-----------------------------------------------------------------------------
-void CGameUI::StopProgressBar( bool bError, const char *failureReason, const char *extendedReason )
-{
-	if ( !g_hLoadingDialog.Get() )
-		return;
-
-	if ( bError )
-	{
-		// turn the dialog to error display mode
-		g_hLoadingDialog->DisplayGenericError( failureReason, extendedReason );
-	}
-
-	// should update the background to be in a transition here
 }
 
 //-----------------------------------------------------------------------------
@@ -825,51 +710,10 @@ bool CGameUI::SetProgressBarStatusText( const char *statusText )
 		return false;
 
 	if ( !GetUiBaseModPanelClass().SetProgressBarStatusText( statusText ) )
-	{
-		if ( !g_hLoadingDialog.Get() )
-			return false;
-
-		g_hLoadingDialog->SetStatusText( statusText );
-		Q_strncpy( m_szPreviousStatusText, statusText, sizeof( m_szPreviousStatusText ) );
 		return true;
-	}
 
 	return false;
 }
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CGameUI::SetSecondaryProgressBar(float progress /* range [0..1] */)
-{
-	if (!g_hLoadingDialog.Get())
-		return;
-
-	g_hLoadingDialog->SetSecondaryProgress(progress);
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CGameUI::SetSecondaryProgressBarText(const char *statusText)
-{
-	if (!g_hLoadingDialog.Get())
-		return;
-
-	g_hLoadingDialog->SetSecondaryProgressText(statusText);
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Returns prev settings
-//-----------------------------------------------------------------------------
-bool CGameUI::SetShowProgressText( bool show )
-{
-	if (!g_hLoadingDialog.Get())
-		return false;
-
-	return g_hLoadingDialog->SetShowProgressText( show );
-}
-
 
 //-----------------------------------------------------------------------------
 // Purpose: returns true if we're currently playing the game
@@ -878,9 +722,8 @@ bool CGameUI::IsInLevel()
 {
 	const char *levelName = engine->GetLevelName();
 	if (levelName && levelName[0] && !engine->IsLevelMainMenuBackground())
-	{
 		return true;
-	}
+
 	return false;
 }
 
@@ -891,9 +734,8 @@ bool CGameUI::IsInBackgroundLevel()
 {
 	const char *levelName = engine->GetLevelName();
 	if (levelName && levelName[0] && engine->IsLevelMainMenuBackground())
-	{
 		return true;
-	}
+
 	return false;
 }
 
@@ -921,67 +763,32 @@ bool CGameUI::HasSavedThisMenuSession()
 	return m_bHasSavedThisMenuSession;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 void CGameUI::SetSavedThisMenuSession( bool bState )
 {
 	m_bHasSavedThisMenuSession = bState;
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Makes the loading background dialog visible, if one has been set
+// Purpose:
 //-----------------------------------------------------------------------------
-void CGameUI::ShowLoadingBackgroundDialog()
-{
-	if ( g_hLoadingBackgroundDialog )
-	{
-		vgui::VPANEL panel = GetUiBaseModPanelClass().GetVPanel();
-
-		vgui::ipanel()->SetParent( g_hLoadingBackgroundDialog, panel );
-		vgui::ipanel()->MoveToFront( g_hLoadingBackgroundDialog );
-	}
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose: Hides the loading background dialog, if one has been set
-//-----------------------------------------------------------------------------
-void CGameUI::HideLoadingBackgroundDialog()
-{
-	if ( g_hLoadingBackgroundDialog )
-	{
-		if ( engine->IsInGame() )
-		{
-			vgui::ivgui()->PostMessage( g_hLoadingBackgroundDialog, new KeyValues( "LoadedIntoGame" ), NULL );
-		}
-		else
-		{
-			vgui::ipanel()->SetVisible( g_hLoadingBackgroundDialog, false );
-			vgui::ipanel()->MoveToBack( g_hLoadingBackgroundDialog );
-		}
-
-		vgui::ivgui()->PostMessage( g_hLoadingBackgroundDialog, new KeyValues("HideAsLoadingPanel"), NULL );
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: Returns whether a loading background dialog has been set
-//-----------------------------------------------------------------------------
-bool CGameUI::HasLoadingBackgroundDialog()
-{
-	return ( NULL != g_hLoadingBackgroundDialog );
-}
-
-//-----------------------------------------------------------------------------
-
 void CGameUI::NeedConnectionProblemWaitScreen()
 {
 	BaseModUI::CUIGameData::Get()->NeedConnectionProblemWaitScreen();
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 void CGameUI::ShowPasswordUI( char const *pchCurrentPW )
 {
 	BaseModUI::CUIGameData::Get()->ShowPasswordUI( pchCurrentPW );
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
 //-----------------------------------------------------------------------------
 void CGameUI::SetProgressOnStart()
 {

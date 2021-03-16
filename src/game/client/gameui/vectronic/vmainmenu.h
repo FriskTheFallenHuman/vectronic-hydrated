@@ -9,58 +9,66 @@
 
 #include "basemodui.h"
 #include "vflyoutmenu.h"
+#include "steam/steam_api.h"
+#include "vgui_avatarimage.h"
+#include "ExImageMenuButton.h"
 
-enum MusicStatus
+namespace BaseModUI 
 {
-	MUSIC_STOP,
-	MUSIC_FIND,
-	MUSIC_PLAY,
-	MUSIC_STOP_FIND,
-	MUSIC_STOP_PLAY,
-};
+	class CSteamDetailsPanel;
 
-namespace BaseModUI {
+	class MainMenu : public CBaseModFrame, public IBaseModFrameListener, public FlyoutMenuListener
+	{
+		DECLARE_CLASS_SIMPLE( MainMenu, CBaseModFrame );
 
-class MainMenu : public CBaseModFrame, public IBaseModFrameListener, public FlyoutMenuListener
-{
-	DECLARE_CLASS_SIMPLE( MainMenu, CBaseModFrame );
+	public:
+		MainMenu( vgui::Panel *parent, const char *panelName );
+		~MainMenu();
 
-public:
-	MainMenu(vgui::Panel *parent, const char *panelName);
-	~MainMenu();
+		void UpdateVisibility();
 
-	void UpdateVisibility();
+		//flyout menu listener
+		virtual void OnNotifyChildFocus( vgui::Panel* child ) {}
+		virtual void OnFlyoutMenuClose( vgui::Panel* flyTo ) {}
+		virtual void OnFlyoutMenuCancelled() {}
 
-	//flyout menu listener
-	virtual void OnNotifyChildFocus( vgui::Panel* child ) {}
-	virtual void OnFlyoutMenuClose( vgui::Panel* flyTo ) {}
-	virtual void OnFlyoutMenuCancelled() {}
+	protected:
+		virtual void ApplySchemeSettings( vgui::IScheme *pScheme );
+		virtual void OnCommand( const char *command );
+		virtual void OnKeyCodePressed( vgui::KeyCode code );
+		virtual void OnKeyCodeTyped( vgui::KeyCode code );
+		virtual void OnThink();
+		virtual void OnOpen();
+		virtual void RunFrame();
+		virtual void PaintBackground();
 
-protected:
-	virtual void ApplySchemeSettings( vgui::IScheme *pScheme );
-	virtual void OnCommand( const char *command );
-	virtual void OnKeyCodePressed(vgui::KeyCode code);
-	virtual void OnKeyCodeTyped( vgui::KeyCode code );
-	virtual void OnThink();
-	virtual void OnOpen();
-	virtual void RunFrame();
-	virtual void PaintBackground();
+	private:
 
-private:
-	void GetRandomMusic( char *pszBuf, int iBufLength );
+		static void AcceptQuitGameCallback();
+		void SetFooterState() {}
 
-	static void AcceptQuitGameCallback();
-	void SetFooterState() {}
+		vgui::ImagePanel	*m_pLogoImage;
+		CSteamDetailsPanel	*m_pSteamDetails;
+	};
 
-	char				m_pzMusicLink[64];	
-	int					m_nSongGuid;
-	MusicStatus			m_psMusicStatus;
+	//-----------------------------------------------------------------------------
+	// Purpose: 
+	//-----------------------------------------------------------------------------
+	class CSteamDetailsPanel : public vgui::EditablePanel
+	{
+		DECLARE_CLASS_SIMPLE( CSteamDetailsPanel, vgui::EditablePanel );
 
-	vgui::ImagePanel	*m_pBGImage;
-	vgui::ImagePanel	*m_pLogoImage;
+	public:
+				CSteamDetailsPanel( vgui::Panel* parent );
+		virtual ~CSteamDetailsPanel() {}
 
-	CPanelAnimationVar( Color, m_BackgroundColor, "background_color", "0 0 0 255" );
-};
+		virtual void PerformLayout();
+		virtual void ApplySchemeSettings( vgui::IScheme *pScheme );
+
+	private:
+		CAvatarImagePanel	*m_pProfileAvatar; 
+		CSteamID			m_SteamID;
+	};
 
 }
 

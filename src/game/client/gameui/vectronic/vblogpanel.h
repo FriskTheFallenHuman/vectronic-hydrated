@@ -13,26 +13,6 @@
 namespace BaseModUI 
 {
 	//-----------------------------------------------------------------------------
-	// Purpose: dialog for the window
-	//-----------------------------------------------------------------------------
-	class BlogPanel : public vgui::EditablePanel
-	{
-		DECLARE_CLASS_SIMPLE( BlogPanel,  vgui::EditablePanel );
-
-	public:
-		BlogPanel( vgui::Panel *parent );
-		~BlogPanel();
-
-		virtual void	ApplySchemeSettings( vgui::IScheme *pScheme );
-		virtual void	OnCommand( const char *command );
-		virtual void	PerformLayout();
-		virtual void	OnKeyCodeTyped( vgui::KeyCode code );
-
-	private:
-		vgui::HTML* m_pHTMLPanel;
-	};
-
-	//-----------------------------------------------------------------------------
 	// Purpose:
 	//-----------------------------------------------------------------------------
 	class BlogScreen : public CBaseModFrame
@@ -43,15 +23,17 @@ namespace BaseModUI
 		BlogScreen( vgui::Panel *parent, const char *panelName );
 		~BlogScreen();
 
-		virtual void	ApplySchemeSettings( vgui::IScheme *pScheme );
-		virtual void	PaintBackground() {}
-		virtual void	PerformLayout();
-		virtual void	Activate();
-		virtual void	OnCommand( const char *command );
-		virtual void	OnKeyCodeTyped( vgui::KeyCode code );
+		virtual void PerformLayout();
+
+	protected:
+		virtual void Activate();
+		virtual void PaintBackground();
+		virtual void ApplySchemeSettings( vgui::IScheme* pScheme );
+		virtual void OnKeyCodeTyped( vgui::KeyCode code );
+		virtual void OnCommand( const char *command );
 
 	private:
-		BlogPanel* m_pProperty;
+		vgui::HTML* m_pHTMLPanel;
 	};
 };
 

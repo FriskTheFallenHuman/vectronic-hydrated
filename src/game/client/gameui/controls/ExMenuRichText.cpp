@@ -20,7 +20,7 @@ DECLARE_BUILD_FACTORY( CExMenuRichText );
 //-----------------------------------------------------------------------------
 CExMenuRichText::CExMenuRichText(Panel *parent, const char *name) : RichText(parent, name)
 {
-	SetScheme( vgui::scheme()->LoadSchemeFromFileEx( 0, "resource/ClientScheme.res", "ClientScheme" ) );
+	SetScheme( vgui::scheme()->LoadSchemeFromFileEx( 0, "resource/MenuScheme.res", "MenuScheme" ) );
 
 	m_szFont[0] = '\0';
 	m_szColor[0] = '\0';

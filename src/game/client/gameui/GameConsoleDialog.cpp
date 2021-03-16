@@ -10,7 +10,6 @@
 #include "vgui/IInput.h"
 #include "vgui/ISurface.h"
 #include "vgui/KeyCode.h"
-#include "LoadingDialog.h"
 #include "IGameUIFuncs.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -88,12 +87,14 @@ void CGameConsoleDialog::OnCommandSubmitted( const char *pCommand )
 //-----------------------------------------------------------------------------
 void CGameConsoleDialog::OnClosedByHittingTilde()
 {
-	if ( !LoadingDialog() )
+	GameUI().HideGameUI();
+
+	/*if ( !LoadingDialog() )
 	{
 		GameUI().HideGameUI();
 	}
 	else
 	{
 		vgui::surface()->RestrictPaintToSinglePanel( LoadingDialog()->GetVPanel() );
-	}
+	}*/
 }

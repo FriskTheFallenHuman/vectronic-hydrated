@@ -26,7 +26,7 @@ DECLARE_BUILD_FACTORY( CExMenuImagePanel );
 //-----------------------------------------------------------------------------
 CExMenuImagePanel::CExMenuImagePanel( Panel *parent, const char *name ) : ScalableImagePanel( parent, name )
 {
-	SetScheme( vgui::scheme()->LoadSchemeFromFileEx( 0, "resource/ClientScheme.res", "ClientScheme" ) );
+	SetScheme( vgui::scheme()->LoadSchemeFromFileEx( 0, "resource/MenuScheme.res", "MenuScheme" ) );
 }
 
 //-----------------------------------------------------------------------------

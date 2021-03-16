@@ -186,6 +186,9 @@ namespace BaseModUI
 		void ReleaseStartupGraphic();
 		void DrawStartupGraphic( float flNormalizedAlpha );
 		IVTFTexture			*m_pBackgroundTexture;
+
+		void PlayGameStartupSound();
+		int m_iPlayGameStartupSound;
 	};
 };
 

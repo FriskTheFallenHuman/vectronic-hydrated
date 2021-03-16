@@ -32,8 +32,6 @@ using namespace BaseModUI;
 
 extern IVEngineClient *engine;
 
-extern void AddSubKeyNamed( KeyValues *pKeys, const char *pszName );
-
 //=============================================================================
 InGameMainMenu::InGameMainMenu( Panel *parent, const char *panelName ): BaseClass( parent, panelName, false, true )
 {
@@ -164,25 +162,9 @@ void InGameMainMenu::ApplySchemeSettings( vgui::IScheme *pScheme )
 {
 	BaseClass::ApplySchemeSettings( pScheme );
 
-	KeyValues *pConditions = new KeyValues( "conditions" );
-
-	time_t ltime = time(0);
-	const time_t *ptime = &ltime;
-	struct tm *today = localtime( ptime );
-	if ( today )
-	{
-		if ( ( today->tm_mon == 9 ) && ( today->tm_mday == 26 || today->tm_mday == 27 || today->tm_mday == 28 || today->tm_mday == 29 || today->tm_mday == 30 || today->tm_mday == 31 ) )
-			AddSubKeyNamed( pConditions, "if_halloween" );
-		else if ( ( today->tm_mon == 11 ) && today->tm_mday == 23 || today->tm_mday == 24 || today->tm_mday == 25 )
-			AddSubKeyNamed( pConditions, "if_christmas" );
-	}
-
-	LoadControlSettings( "Resource/UI/BaseModUI/InGameMainMenu.res", NULL, NULL, pConditions );
+	LoadControlSettings( "Resource/UI/BaseModUI/InGameMainMenu.res" );
 
 	SetPaintBackgroundEnabled( true );
-
-	if ( pConditions )
-		pConditions->deleteThis();
 }
 
 //=============================================================================

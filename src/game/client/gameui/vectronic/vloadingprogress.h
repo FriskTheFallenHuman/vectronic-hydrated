@@ -12,10 +12,11 @@
 #include "const.h"
 #include "igameevents.h"
 #include "ExMenuButton.h"
+#include "LoadingTipPanel.h"
 
 namespace BaseModUI 
 {
-	class LoadingProgress : public CBaseModFrame, public IGameEventListener2
+	class LoadingProgress : public CBaseModFrame, public CGameEventListener
 	{
 		DECLARE_CLASS_SIMPLE( LoadingProgress, CBaseModFrame );
 
@@ -51,8 +52,6 @@ namespace BaseModUI
 
 		void				SetStatusText( const char *statusText );
 
-		void				SetMapData( KeyValues *pMapInfo );
-		void				SetupMapInfo( void );
 	protected:
 		virtual void		OnThink();
 		virtual void		OnCommand(const char *command);
@@ -76,12 +75,7 @@ namespace BaseModUI
 
 		bool				m_bLoadedFully;
 
-		// Map Data
-		KeyValues			*m_pMapInfo;
 		bool				m_bValid;
-
-		int					m_textureID_LoadingBar;
-		int					m_textureID_LoadingBarBG;
 
 		bool				m_bDrawBackground;
 		bool				m_bDrawProgress;
@@ -90,6 +84,8 @@ namespace BaseModUI
 		float				m_flPeakProgress;
 
 		float				m_flLastEngineTime;
+
+		CLoadingTipPanel	*m_pTipPanel;
 	};
 };
 

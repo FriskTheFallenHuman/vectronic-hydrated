@@ -16,7 +16,7 @@ DECLARE_BUILD_FACTORY_DEFAULT_TEXT( CExImageMenuButton, CExImageMenuButton );
 //-----------------------------------------------------------------------------
 CExImageMenuButton::CExImageMenuButton( Panel *parent, const char *name, const char *text ) : CExMenuButton( parent, name, text )
 {
-	SetScheme( vgui::scheme()->LoadSchemeFromFileEx( 0, "resource/ClientScheme.res", "ClientScheme" ) );
+	SetScheme( vgui::scheme()->LoadSchemeFromFileEx( 0, "resource/MenuScheme.res", "MenuScheme" ) );
 
 	m_clrDraw = Color( 0, 0, 0, 0 );
 	m_clrArmed = Color( 0, 0, 0, 0 );
@@ -29,7 +29,7 @@ CExImageMenuButton::CExImageMenuButton( Panel *parent, const char *name, const c
 //-----------------------------------------------------------------------------
 CExImageMenuButton::CExImageMenuButton( Panel *parent, const char *name, const wchar_t *wszText ) : CExMenuButton( parent, name, wszText )
 {
-	SetScheme( vgui::scheme()->LoadSchemeFromFileEx( 0, "resource/ClientScheme.res", "ClientScheme" ) );
+	SetScheme( vgui::scheme()->LoadSchemeFromFileEx( 0, "resource/MenuScheme.res", "MenuScheme" ) );
 
 	m_clrDraw = Color( 0, 0, 0, 0 );
 	m_clrArmed = Color( 0, 0, 0, 0 );
