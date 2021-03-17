@@ -14,7 +14,7 @@ $Configuration
 {
 	$Compiler
 	{
-		$AdditionalIncludeDirectories	"$BASE;.\estranged;.\vectronic;.\vectronic\vgui;$SRCDIR\game\shared\vectronic;$SRCDIR\game\shared\multiplayer"
+		$AdditionalIncludeDirectories	"$BASE;.\vectronic;.\vectronic\vgui;$SRCDIR\game\shared\vectronic;$SRCDIR\game\shared\multiplayer"
 		$PreprocessorDefinitions		"$BASE;VECTRONIC_DLL;GLOWS_ENABLE"
 	}
 }
@@ -67,9 +67,6 @@ $Project "Client (Vectronic)"
 				$File	"vectronic\hud_buildinfo.cpp"
 				$File	"vectronic\hud_damageindicator.cpp"
 				$File	"vectronic\hud_weaponselection.cpp"
-				$File	"vectronic\hud_health.cpp"
-				$File	"estranged\hud_chapter_title.cpp"
-				$File	"estranged\hud_chapter_title.h"
 				$File	"vectronic\vgui_rootpanel_vectronic.cpp"
 			}
 
@@ -77,6 +74,8 @@ $Project "Client (Vectronic)"
 			$File	"vectronic\c_baseglowanimating.h"
 			$File	"vectronic\clientmode_vectronic.h"
 			$File	"vectronic\clientmode_vectronic.cpp"
+			$File	"vectronic\tip_manager.cpp"
+			$File	"vectronic\tip_manager.h"
 			$File	"vectronic\vectronic_fx.cpp"
 			$File	"vectronic\vectronic_in_main.cpp"
 			$File	"vectronic\vectronic_prediction.cpp"

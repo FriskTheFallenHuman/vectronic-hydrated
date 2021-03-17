@@ -36,7 +36,7 @@ $Project
 						"gameui\GameUI_Interface.cpp" \
 						"gameui\KeyToggleCheckButton.cpp" \
 						"gameui\LabeledCommandComboBox.cpp" \
-						"gameui\LoadingDialog.cpp" \
+						"gameui\LoadingTipPanel.cpp" \
 						"gameui\ModInfo.cpp" \
 						"gameui\MouseMessageForwardingPanel.cpp" \
 						"gameui\MultiplayerAdvancedDialog.cpp" \
@@ -77,6 +77,7 @@ $Project
 			{
 				$File	"gameui\vectronic\basemodframe.cpp"
 				$File	"gameui\vectronic\BaseModPanel.cpp"
+				$File	"gameui\GameUI_Utils.cpp"
 				$File	"gameui\vectronic\UIGameData.cpp"
 				$File	"gameui\vectronic\ui_defines.h"
 
@@ -93,11 +94,7 @@ $Project
 							"gameui\vectronic\vmainmenu.cpp" \
 							"gameui\vectronic\vmenubackground.cpp" \
 							"gameui\vectronic\vslidercontrol.cpp" \
-							"gameui\vectronic\vcreditsscreen.cpp" \
-							"gameui\vectronic\vcreategame.cpp" \
-							"gameui\vectronic\vcreategamegameplaypage.cpp" \
-							"gameui\vectronic\vcreategameserverpage.cpp" \
-							"gameui\vectronic\vblogpanel.cpp"
+							"gameui\vectronic\vcreategame.cpp"
 				}
 				
 				$Folder	"Buttons"

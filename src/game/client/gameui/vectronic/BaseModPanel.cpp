@@ -39,8 +39,6 @@
 #include "vloadingprogress.h"
 #include "vmainmenu.h"
 #include "vcreategame.h"
-#include "vcreditsscreen.h"
-#include "vblogpanel.h"
 #include "nb_header_footer.h"
 
 // UI defines. Include if you want to implement some of them [str]
@@ -118,6 +116,10 @@ CBaseModPanel::CBaseModPanel(): BaseClass( 0, "CBaseModPanel" ),
 
 	m_iBackgroundImageID = -1;
 	m_iProductImageID = -1;
+
+	// Delay playing the startup music until two frames
+	// this allows cbuf commands that occur on the first frame that may start a map
+	m_iPlayGameStartupSound = 2;
 
 	m_nProductImageWide = 0;
 	m_nProductImageTall = 0;
@@ -214,14 +216,6 @@ CBaseModFrame* CBaseModPanel::OpenWindow(const WINDOW_TYPE & wt, CBaseModFrame *
 
 		case WT_CREATEGAME:
 			m_Frames[wt] = new CreateGame( this, "CreateGame" );
-			break;
-
-		case WT_CREDITSSCREEN:
-			m_Frames[wt] = new CreditsScreen( this, "CreditsScreen" );
-			break;
-
-		case WT_BLOGPANEL:
-			m_Frames[wt] = new BlogScreen( this, "BlogScreen" );
 			break;
 
 		default:
@@ -675,6 +669,14 @@ void CBaseModPanel::RunFrame()
 		}
 	}
 
+	// Play the music startup
+	if ( m_iPlayGameStartupSound > 0 )
+	{
+		m_iPlayGameStartupSound--;
+		if ( !m_iPlayGameStartupSound )
+			PlayGameStartupSound();
+	}
+
 	bool bDoBlur = true;
 	WINDOW_TYPE wt = GetActiveWindowType();
 	switch ( wt )
@@ -715,6 +717,9 @@ void CBaseModPanel::OnLevelLoadingStarted( bool bShowProgressDialog )
 
 	CloseAllWindows();
 
+	// Don't play the start game sound if this happens before we get to the first frame
+	m_iPlayGameStartupSound = 0;
+
 	if ( UI_IsDebug() )
 	{
 		ConColorMsg( Color( 77, 116, 85, 255 ),  "[GAMEUI] OnLevelLoadingStarted - opening loading progress (%s)...\n" );
@@ -746,33 +751,8 @@ void CBaseModPanel::OnLevelLoadingStarted( bool bShowProgressDialog )
 
 void CBaseModPanel::OnEngineLevelLoadingSession( void )
 {
-	// We must keep the default loading poster because it will be replaced by
-	// the real campaign loading poster shortly
-	/*float flProgress = 0.0f;
-	if ( LoadingProgress *pLoadingProgress = static_cast<LoadingProgress*>( GetWindow( WT_LOADINGPROGRESS ) ) )
-	{
-		flProgress = pLoadingProgress->GetProgress();
-		pLoadingProgress->Close();
-		m_Frames[ WT_LOADINGPROGRESS ] = NULL;
-	}
-	CloseAllWindows( CLOSE_POLICY_DEFAULT );*/
-
-	/*if ( LoadingProgress *pLoadingProgress = static_cast<LoadingProgress*>( OpenWindow( WT_LOADINGPROGRESSBKGND, NULL ) ) )
-	{
-		KeyValues *pMapInfo = new KeyValues( "MapInfo" );
-		pMapInfo->SetString( "mapname", engine->GetLevelName() );
-		pLoadingProgress->SetMapData( pMapInfo );
-
-		//pLoadingProgress->SetProgress( flProgress );
-		pLoadingProgress->SetupMapInfo();
-
-		pMapInfo->deleteThis();
-	}*/
-
 	if ( UI_IsDebug() )
-	{
 		ConColorMsg( Color( 77, 116, 85, 255 ),  "[GAMEUI] CBaseModPanel::OnEngineLevelLoadingSession...\n");
-	}
 }
 
 //=============================================================================
@@ -784,9 +764,7 @@ void CBaseModPanel::OnLevelLoadingFinished( KeyValues *kvEvent )
 	Assert( m_LevelLoading );
 
 	if ( UI_IsDebug() )
-	{
 		ConColorMsg( Color( 77, 116, 85, 255 ),  "[GAMEUI] CBaseModPanel::OnLevelLoadingFinished( %s, %s )\n", bError ? "Had Error" : "No Error", failureReason );
-	}
 
 	LoadingProgress *pLoadingProgress = static_cast<LoadingProgress*>( GetWindow( WT_LOADINGPROGRESS ) );
 	if ( pLoadingProgress )
@@ -801,9 +779,19 @@ void CBaseModPanel::OnLevelLoadingFinished( KeyValues *kvEvent )
 
 	CBaseModFrame *pFrame = CBaseModPanel::GetSingleton().GetWindow( WT_GENERICCONFIRMATION );
 	if ( !pFrame )
+		GameUI().HideGameUI();	// no confirmation up, hide the UI
+
+	if ( bError )
 	{
-		// no confirmation up, hide the UI
-		GameUI().HideGameUI();
+		GenericConfirmation* pMsg = ( GenericConfirmation* ) OpenWindow( WT_GENERICCONFIRMATION, NULL, false );		
+		if ( pMsg )
+		{
+			GenericConfirmation::Data_t data;
+			data.pWindowTitle = "#GameUI_DisconnectedFrom";			
+			data.bOkButtonEnabled = true;
+			data.pMessageText = failureReason;
+			pMsg->SetUsageData( data );
+		}		
 	}
 }
 
@@ -1380,6 +1368,67 @@ void CBaseModPanel::PlayUISound( UISound_t UISound )
 	if ( pSound )
 	{
 		vgui::surface()->PlaySound( pSound );
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Searches for GameStartup*.mp3 files in the sound/ui folder and plays one
+//-----------------------------------------------------------------------------
+void CBaseModPanel::PlayGameStartupSound()
+{
+	if ( CommandLine()->FindParm( "-nostartupsound" ) )
+		return;
+
+	FileFindHandle_t fh;
+
+	CUtlVector<char *> fileNames;
+
+	char path[512];
+	Q_snprintf( path, sizeof( path ), "sound/ui/gamestartup*.mp3" );
+	Q_FixSlashes( path );
+
+	char const *fn = g_pFullFileSystem->FindFirstEx( path, "MOD", &fh );
+	if ( fn )
+	{
+		do
+		{
+			char ext[10];
+			Q_ExtractFileExtension( fn, ext, sizeof( ext ) );
+
+			if ( !Q_stricmp( ext, "mp3") )
+			{
+				char temp[512];
+				Q_snprintf( temp, sizeof( temp ), "ui/%s", fn );
+
+				char *found = new char[strlen( temp ) + 1];
+				Q_strncpy( found, temp, strlen( temp ) + 1 );
+
+				Q_FixSlashes( found );
+				fileNames.AddToTail( found );
+			}
+
+			fn = g_pFullFileSystem->FindNext( fh );
+
+		} while ( fn );
+
+		g_pFullFileSystem->FindClose( fh );
+	}
+
+	// did we find any?
+	if ( fileNames.Count() > 0 )
+	{
+		int index = RandomInt( 0, fileNames.Count() - 1 );
+		if ( fileNames.IsValidIndex( index ) && fileNames[index] )
+		{
+			char found[512];
+
+			// escape chars "*#" make it stream, and be affected by snd_musicvolume
+			Q_snprintf( found, sizeof( found ), "play *#%s", fileNames[index] );
+
+			engine->ClientCmd_Unrestricted( found );
+		}
+
+		fileNames.PurgeAndDeleteElements();
 	}
 }
 

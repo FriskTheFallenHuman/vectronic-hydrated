@@ -29,7 +29,6 @@
 #include "fmtstr.h"
 
 #include "FileSystem.h"
-#include "engine/IEngineSound.h"
 
 #include "time.h"
 
@@ -38,17 +37,6 @@
 
 using namespace vgui;
 using namespace BaseModUI;
-
-void AddSubKeyNamed( KeyValues *pKeys, const char *pszName )
-{
-	KeyValues *pKeyvalToAdd = new KeyValues( pszName );
-
-	if ( pKeyvalToAdd )
-		pKeys->AddSubKey( pKeyvalToAdd );
-}
-
-ConVar ui_mainmenu_music( "ui_mainmenu_music", "1", FCVAR_ARCHIVE, "Toggle music in the main menu." );
-ConVar ui_mainmenu_music_type( "ui_mainmenu_music_type", "0", FCVAR_ARCHIVE, "Toggle between hl2/tf2 music in the main menu." );
 
 //=============================================================================
 MainMenu::MainMenu( Panel *parent, const char *panelName ):	BaseClass( parent, panelName, true, true, false, false )
@@ -60,16 +48,13 @@ MainMenu::MainMenu( Panel *parent, const char *panelName ):	BaseClass( parent, p
 
 	SetLowerGarnishEnabled( true );
 
-	m_psMusicStatus = MUSIC_FIND;
-	m_pzMusicLink[0] = '\0';
-	m_nSongGuid = 0;
-
-	m_pBGImage = NULL;
 	m_pLogoImage = NULL;
 
 	AddFrameListener( this );
 
 	SetDeleteSelfOnClose( true );
+
+	m_pSteamDetails = new CSteamDetailsPanel( this );
 }
 
 //=============================================================================
@@ -89,14 +74,6 @@ void MainMenu::OnCommand( const char *command )
 	if ( !Q_strcmp( command, "Achievements" ) )
 	{
 		CBaseModPanel::GetSingleton().OpenWindow( WT_ACHIEVEMENTS, this, true );
-	}
-	else if ( !Q_strcmp( command, "Credits" ) )
-	{
-		CBaseModPanel::GetSingleton().OpenWindow( WT_CREDITSSCREEN, this, true );
-	}
-	else if ( !Q_strcmp( command, "LatestNews" ) )
-	{
-		CBaseModPanel::GetSingleton().OpenWindow( WT_BLOGPANEL, this, true );
 	}
 	else if ( !Q_strcmp( command, "QuitGame" ) )
 	{
@@ -122,10 +99,6 @@ void MainMenu::OnCommand( const char *command )
 	else if( !Q_strcmp( command, "CreateGame" ) )
 	{
 		CBaseModPanel::GetSingleton().OpenWindow( WT_CREATEGAME, this, true );
-	}
-	else if ( !Q_strcmp( command, "randommusic" ) )
-	{
-		enginesound->StopSoundByGuid( m_nSongGuid );
 	}
 	else
 	{
@@ -186,13 +159,6 @@ void MainMenu::OnKeyCodePressed( KeyCode code )
 //=============================================================================
 void MainMenu::OnKeyCodeTyped( KeyCode code )
 {
-	switch ( code )
-	{
-	case KEY_G:
-		OnCommand( "randommusic" );
-		break;
-	}
-
 	BaseClass::OnKeyTyped( code );
 }
 
@@ -224,17 +190,16 @@ void MainMenu::OnOpen()
 //=============================================================================
 void MainMenu::PaintBackground() 
 {
-	// TODO: Add script settings
-	vgui::surface()->DrawSetColor( Color(m_BackgroundColor) );
-	vgui::surface()->DrawFilledRectFade( 0, 0, GetWide(), GetTall(), 255, 0, true );
-
-	if ( m_pBGImage )
+	vgui::Panel *m_pFooter = FindChildByName( "PnlBackground" );
+	if ( m_pFooter )
 	{
+		int screenWidth, screenHeight;
+		CBaseModPanel::GetSingleton().GetSize( screenWidth, screenHeight );
+
 		int x, y, wide, tall;
-		m_pBGImage->GetBounds( x, y, wide, tall );
-		surface()->DrawSetColor( Color( 255, 255, 255, 255 ) );
-		surface()->DrawSetTexture( m_pBGImage->GetImage()->GetID() );
-		surface()->DrawTexturedRect( x, y, x+wide, y+tall );
+		m_pFooter->GetBounds( x, y, wide, tall );
+		surface()->DrawSetColor( m_pFooter->GetBgColor() );
+		surface()->DrawFilledRect( 0, y, x+screenWidth, y+tall );	
 	}
 }
 
@@ -242,29 +207,6 @@ void MainMenu::PaintBackground()
 void MainMenu::RunFrame()
 {
 	BaseClass::RunFrame();
-
-	if ( ui_mainmenu_music.GetBool() && !CommandLine()->FindParm( "-nostartupsound" ) )
-	{
-		if ( ( m_psMusicStatus == MUSIC_FIND || m_psMusicStatus == MUSIC_STOP_FIND ) && !enginesound->IsSoundStillPlaying( m_nSongGuid ) )
-		{
-			GetRandomMusic( m_pzMusicLink, sizeof( m_pzMusicLink ) );
-			m_psMusicStatus = MUSIC_PLAY;
-		}
-		else if ( ( m_psMusicStatus == MUSIC_PLAY || m_psMusicStatus == MUSIC_STOP_PLAY )&& m_pzMusicLink[0] != '\0' )
-		{
-			enginesound->StopSoundByGuid( m_nSongGuid );
-			ConVar *snd_musicvolume = cvar->FindVar( "snd_musicvolume" );
-			float fVolume = ( snd_musicvolume ? snd_musicvolume->GetFloat() : 1.0f );
-			enginesound->EmitAmbientSound( m_pzMusicLink, fVolume, PITCH_NORM, 0 );			
-			m_nSongGuid = enginesound->GetGuidForLastSoundEmitted();
-			m_psMusicStatus = MUSIC_FIND;
-		}
-	}
-	else if ( m_psMusicStatus == MUSIC_FIND )
-	{
-		enginesound->StopSoundByGuid( m_nSongGuid );
-		m_psMusicStatus = ( m_nSongGuid == 0 ? MUSIC_STOP_FIND : MUSIC_STOP_PLAY );
-	}
 }
 
 //=============================================================================
@@ -272,101 +214,9 @@ void MainMenu::ApplySchemeSettings( IScheme *pScheme )
 {
 	BaseClass::ApplySchemeSettings( pScheme );
 
-	int screenWide, screenTall;
-	surface()->GetScreenSize( screenWide, screenTall );
-
-	float aspectRatio = (float)screenWide/(float)screenTall;
-	bool bIsWidescreen = aspectRatio >= 1.5999f;
-
-	m_pBGImage = dynamic_cast< vgui::ImagePanel* >( FindChildByName( "Background" ) );
-	if ( m_pBGImage )
-	{
-		// set the correct background image
-		char szBGName[MAX_PATH];
-		engine->GetMainMenuBackgroundName( szBGName, sizeof( szBGName ) );
-		char szImage[MAX_PATH];
-		Q_snprintf( szImage, sizeof( szImage ), "../console/%s", szBGName );
-
-		if ( bIsWidescreen )
-			Q_strcat( szImage, "_widescreen", sizeof( szImage ) );
-
-		m_pBGImage->SetImage( szImage );
-
-		// we will custom draw
-		//m_pBGImage->SetVisible( false );
-	}
-
 	m_pLogoImage = dynamic_cast< vgui::ImagePanel* >( FindChildByName( "GameLogo" ) );
 
-	KeyValues *pConditions = new KeyValues( "conditions" );
-
-	time_t ltime = time(0);
-	const time_t *ptime = &ltime;
-	struct tm *today = localtime( ptime );
-	if ( today )
-	{
-		if ( ( today->tm_mon == 9 ) && ( today->tm_mday == 26 || today->tm_mday == 27 || today->tm_mday == 28 || today->tm_mday == 29 || today->tm_mday == 30 || today->tm_mday == 31 ) )
-			AddSubKeyNamed( pConditions, "if_halloween" );
-		else if ( ( today->tm_mon == 11 ) && today->tm_mday == 23 || today->tm_mday == 24 || today->tm_mday == 25 )
-			AddSubKeyNamed( pConditions, "if_christmas" );
-	}
-
-	if ( bIsWidescreen )
-		AddSubKeyNamed( pConditions, "if_wider" );
-
-	LoadControlSettings( "Resource/UI/BaseModUI/MainMenu.res", NULL, NULL, pConditions );
-
-	if ( pConditions )
-		pConditions->deleteThis();
-}
-
-//=============================================================================
-void MainMenu::GetRandomMusic( char *pszBuf, int iBufLength )
-{
-	Assert( iBufLength );
-
-	char szPath[MAX_PATH];
-
-	if ( ui_mainmenu_music_type.GetInt() == 1 )
-	{
-		// Check that there's music available
-		if ( !g_pFullFileSystem->FileExists( "sound/ui/gamestartup1.mp3" ) )
-		{
-			Assert(false);
-			*pszBuf = '\0';
-		}
-
-		// Discover tracks, 1 through n
-		int iLastTrack = 0;
-		do
-		{
-			Q_snprintf( szPath, sizeof(szPath), "sound/ui/gamestartup%d.mp3", ++iLastTrack );
-		} while ( g_pFullFileSystem->FileExists( szPath ) );
-
-		// Pick a random one
-		Q_snprintf( szPath, sizeof( szPath ), "ui/gamestartup%d.mp3", RandomInt( 1, iLastTrack - 1 ) );
-		Q_strncpy( pszBuf, szPath, iBufLength);
-	}
-	else
-	{
-		// Check that there's music available
-		if ( !g_pFullFileSystem->FileExists( "sound/ui/gamestartup/gamestartup1.mp3" ) )
-		{
-			Assert(false);
-			*pszBuf = '\0';
-		}
-
-		// Discover tracks, 1 through n
-		int iLastTrack = 0;
-		do
-		{
-			Q_snprintf( szPath, sizeof(szPath), "sound/ui/gamestartup/gamestartup%d.mp3", ++iLastTrack );
-		} while ( g_pFullFileSystem->FileExists( szPath ) );
-
-		// Pick a random one
-		Q_snprintf( szPath, sizeof( szPath ), "ui/gamestartup/gamestartup%d.mp3", RandomInt( 1, iLastTrack - 1 ) );
-		Q_strncpy( pszBuf, szPath, iBufLength);
-	}
+	LoadControlSettings( "Resource/UI/BaseModUI/MainMenu.res" );
 }
 
 //=============================================================================
@@ -375,3 +225,43 @@ void MainMenu::AcceptQuitGameCallback()
 	if ( MainMenu *pMainMenu = static_cast< MainMenu* >( CBaseModPanel::GetSingleton().GetWindow( WT_MAINMENU ) ) )
 		pMainMenu->OnCommand( "QuitGame_NoConfirm" );
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CSteamDetailsPanel::CSteamDetailsPanel( Panel *pParent ) : EditablePanel( pParent, "SteamDetailsPanel" )
+{
+	if ( steamapicontext->SteamUser() )
+		m_SteamID = steamapicontext->SteamUser()->GetSteamID();
+
+	m_pProfileAvatar = NULL;
+
+	vgui::ivgui()->AddTickSignal( GetVPanel(), 100 );
+}
+
+//=============================================================================
+void CSteamDetailsPanel::ApplySchemeSettings( vgui::IScheme *pScheme )
+{
+	BaseClass::ApplySchemeSettings( pScheme );
+
+	LoadControlSettings( "Resource/UI/SteamDetailsPanel.res" );
+
+	m_pProfileAvatar = dynamic_cast<CAvatarImagePanel *>( FindChildByName( "AvatarImage" ) );
+}
+
+//=============================================================================
+void CSteamDetailsPanel::PerformLayout()
+{
+	BaseClass::PerformLayout();
+
+	if ( m_pProfileAvatar )
+	{
+		m_pProfileAvatar->SetPlayer( m_SteamID, k_EAvatarSize64x64 );
+		m_pProfileAvatar->SetShouldDrawFriendIcon( false );
+	}
+
+	char szSteamUser[64];
+	Q_snprintf( szSteamUser, sizeof( szSteamUser ),
+		( steamapicontext->SteamFriends() ? steamapicontext->SteamFriends()->GetPersonaName() : "Unknown" ) );
+	SetDialogVariable( "steamusername", szSteamUser );
+};

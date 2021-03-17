@@ -18,7 +18,7 @@ DECLARE_BUILD_FACTORY_DEFAULT_TEXT( CExMenuLabel, CExMenuLabel );
 //-----------------------------------------------------------------------------
 CExMenuLabel::CExMenuLabel(Panel *parent, const char *name, const char *text) : Label(parent, name, text)
 {
-	SetScheme( vgui::scheme()->LoadSchemeFromFileEx( 0, "resource/ClientScheme.res", "ClientScheme" ) );
+	SetScheme( vgui::scheme()->LoadSchemeFromFileEx( 0, "resource/MenuScheme.res", "MenuScheme" ) );
 
 	m_szColor[0] = '\0';
 }
@@ -28,7 +28,7 @@ CExMenuLabel::CExMenuLabel(Panel *parent, const char *name, const char *text) : 
 //-----------------------------------------------------------------------------
 CExMenuLabel::CExMenuLabel(Panel *parent, const char *name, const wchar_t *wszText) : Label(parent, name, wszText)
 {
-	SetScheme( vgui::scheme()->LoadSchemeFromFileEx( 0, "resource/ClientScheme.res", "ClientScheme" ) );
+	SetScheme( vgui::scheme()->LoadSchemeFromFileEx( 0, "resource/MenuScheme.res", "MenuScheme" ) );
 
 	m_szColor[0] = '\0';
 }

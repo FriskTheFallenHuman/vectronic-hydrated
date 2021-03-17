@@ -45,7 +45,7 @@ public:
 	void PreventEngineHideGameUI();
 	void AllowEngineHideGameUI();
 
-	virtual void SetLoadingBackgroundDialog( vgui::VPANEL panel );
+	virtual void SetLoadingBackgroundDialog( vgui::VPANEL panel ) {}
 
 	// notifications
 	virtual void OnGameUIActivated();
@@ -60,10 +60,10 @@ public:
 	// progress
 	virtual bool UpdateProgressBar(float progress, const char *statusText);
 	// Shows progress desc, returns previous setting... (used with custom progress bars )
-	virtual bool SetShowProgressText( bool show );
+	virtual bool SetShowProgressText( bool show ) { return false; }
 
 	// Allows the level loading progress to show map-specific info
-	virtual void SetProgressLevelName( const char *levelName );
+	virtual void SetProgressLevelName( const char *levelName ) {}
 
  	virtual void NeedConnectionProblemWaitScreen();
 
@@ -79,9 +79,9 @@ public:
  	bool HasSavedThisMenuSession();
  	void SetSavedThisMenuSession( bool bState );
  
- 	void ShowLoadingBackgroundDialog();
-	void HideLoadingBackgroundDialog();
-	bool HasLoadingBackgroundDialog();
+ 	void ShowLoadingBackgroundDialog() {}
+	void HideLoadingBackgroundDialog() {}
+	bool HasLoadingBackgroundDialog() { return false; }
 
 	virtual void ShowNewGameDialog( int chapter ) {}
 
@@ -122,14 +122,14 @@ public:
 private:
 	void SendConnectedToGameMessage();
 
-	virtual void StartProgressBar();
-	virtual bool ContinueProgressBar(float progressFraction);
-	virtual void StopProgressBar(bool bError, const char *failureReason, const char *extendedReason = NULL);
+	virtual void StartProgressBar() {}
+	virtual bool ContinueProgressBar(float progressFraction) { return false; }
+	virtual void StopProgressBar(bool bError, const char *failureReason, const char *extendedReason = NULL) {}
 	virtual bool SetProgressBarStatusText(const char *statusText);
 
 	//!! these functions currently not implemented
-	virtual void SetSecondaryProgressBar(float progress /* range [0..1] */);
-	virtual void SetSecondaryProgressBarText(const char *statusText);
+	virtual void SetSecondaryProgressBar(float progress /* range [0..1] */) {}
+	virtual void SetSecondaryProgressBarText(const char *statusText) {}
 
 	bool FindPlatformDirectory(char *platformDir, int bufferSize);
 	void GetUpdateVersion( char *pszProd, char *pszVer);
@@ -148,7 +148,6 @@ private:
 	int m_iGameQueryPort;
 	
 	int m_iFriendsLoadPauseFrames;
-	int m_iPlayGameStartupSound;
 
 	char m_szPreviousStatusText[128];
 	char m_szPlatformDir[MAX_PATH];
