@@ -78,14 +78,6 @@ void InGameMainMenu::OnCommand( const char *command )
 	{
 		CBaseModPanel::GetSingleton().OpenWindow( WT_ACHIEVEMENTS, this, true );
 	}
-	else if ( !Q_strcmp( command, "Credits" ) )
-	{
-		CBaseModPanel::GetSingleton().OpenWindow( WT_CREDITSSCREEN, this, true );
-	}
-	else if ( !Q_strcmp( command, "LatestNews" ) )
-	{
-		CBaseModPanel::GetSingleton().OpenWindow( WT_BLOGPANEL, this, true );
-	}
 	else if( !Q_strcmp( command, "ExitToMainMenu" ) )
 	{
 		MakeGenericDialog( "#GameUI_Disconnect", 

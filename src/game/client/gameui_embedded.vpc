@@ -94,11 +94,7 @@ $Project
 							"gameui\vectronic\vmainmenu.cpp" \
 							"gameui\vectronic\vmenubackground.cpp" \
 							"gameui\vectronic\vslidercontrol.cpp" \
-							"gameui\vectronic\vcreditsscreen.cpp" \
-							"gameui\vectronic\vcreategame.cpp" \
-							"gameui\vectronic\vcreategamegameplaypage.cpp" \
-							"gameui\vectronic\vcreategameserverpage.cpp" \
-							"gameui\vectronic\vblogpanel.cpp"
+							"gameui\vectronic\vcreategame.cpp"
 				}
 				
 				$Folder	"Buttons"

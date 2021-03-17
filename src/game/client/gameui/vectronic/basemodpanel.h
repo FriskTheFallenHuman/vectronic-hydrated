@@ -39,8 +39,6 @@ namespace BaseModUI
 		WT_LOADINGPROGRESS,
 		WT_MAINMENU,
 		WT_CREATEGAME,
-		WT_CREDITSSCREEN,
-		WT_BLOGPANEL,
 		WT_WINDOW_COUNT // WT_WINDOW_COUNT must be last in the list!
 	};
 

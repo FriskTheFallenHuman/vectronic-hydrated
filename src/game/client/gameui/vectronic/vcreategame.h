@@ -1,53 +1,26 @@
-//=====================================================================================//
+//========= Copyright © 1996-2008, Valve Corporation, All rights reserved. ============//
 //
-// Purpose:
+// Purpose: 
 //
 //=====================================================================================//
 
 #ifndef __VCREATEGAME_H__
 #define __VCREATEGAME_H__
-#ifdef _WIN32
-#pragma once
-#endif
 
 #include "basemodui.h"
-#include <vgui_controls/PropertyDialog.h>
 
-class CreateGameServerPage;
-class CreateGameGameplayPage;
+class CPanelListPanel;
+class CDescription;
+class mpcontrol_t;
 
 namespace BaseModUI 
 {
-	//-----------------------------------------------------------------------------
-	// Purpose: dialog for the window
-	//-----------------------------------------------------------------------------
-	class CreateGameProperty : public vgui::PropertyDialog
-	{
-		DECLARE_CLASS_SIMPLE( CreateGameProperty,  vgui::PropertyDialog );
-
-	public:
-		CreateGameProperty( vgui::Panel *parent );
-		~CreateGameProperty();
-
-		virtual void	ApplySchemeSettings( vgui::IScheme *pScheme );
-		virtual bool	OnOK( bool applyOnly );
-		virtual void	OnCommand( const char *command );
-		virtual void	OnKeyCodeTyped( vgui::KeyCode code );
-
-	private:
-		CreateGameServerPage *m_pServerPage;
-		CreateGameGameplayPage *m_pGameplayPage;
-
-		// for loading/saving game config
-		KeyValues *m_pSavedData;
-	};
-
 	//-----------------------------------------------------------------------------
 	// Purpose: window for launching a server
 	//-----------------------------------------------------------------------------
 	class CreateGame : public CBaseModFrame
 	{
-		DECLARE_CLASS_SIMPLE( CreateGame,  CBaseModFrame );
+		DECLARE_CLASS_SIMPLE( CreateGame, CBaseModFrame );
 
 	public:
 		CreateGame( vgui::Panel *parent, const char *panelName );
@@ -56,13 +29,44 @@ namespace BaseModUI
 		virtual void	Activate( void );
 		virtual void	PerformLayout( void );
 		virtual void	ApplySchemeSettings( vgui::IScheme *pScheme );
-		virtual void	PaintBackground() {}
 
 		virtual void	OnCommand( const char *command );
 		virtual void	OnKeyCodeTyped( vgui::KeyCode code );
-	private:
+		virtual void	PaintBackground();
 
-		CreateGameProperty *m_pProperty;
+		// returns currently entered information about the server
+		virtual void	SetMap( const char *name );
+		virtual bool	IsRandomMapSelected();
+		virtual const char	*GetMapName();
+
+		// returns currently entered information about the server
+		virtual	int GetMaxPlayers();
+		virtual const char *GetPassword();
+		virtual const char *GetHostName();
+
+	protected:
+		virtual void	OnApplyChanges();
+
+	private:
+		virtual void	LoadMapList();
+		virtual void	LoadMaps( const char *pszPathID );
+		virtual const char *GetValue( const char *cvarName, const char *defaultValue );
+		virtual void LoadGameOptionsList();
+		virtual void GatherCurrentValues();
+
+		CDescription *m_pDescription;
+		mpcontrol_t *m_pList;
+		CPanelListPanel *m_pOptionsList;
+
+		vgui::ComboBox *m_pMapList;
+
+		enum { DATA_STR_LENGTH = 64 };
+		char m_szMapName[DATA_STR_LENGTH];
+
+		// for loading/saving game config
+		KeyValues *m_pSavedData;
 	};
-}
+
+};
+
 #endif // __VCREATEGAME_H__

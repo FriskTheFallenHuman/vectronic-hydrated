@@ -39,8 +39,6 @@
 #include "vloadingprogress.h"
 #include "vmainmenu.h"
 #include "vcreategame.h"
-#include "vcreditsscreen.h"
-#include "vblogpanel.h"
 #include "nb_header_footer.h"
 
 // UI defines. Include if you want to implement some of them [str]
@@ -218,14 +216,6 @@ CBaseModFrame* CBaseModPanel::OpenWindow(const WINDOW_TYPE & wt, CBaseModFrame *
 
 		case WT_CREATEGAME:
 			m_Frames[wt] = new CreateGame( this, "CreateGame" );
-			break;
-
-		case WT_CREDITSSCREEN:
-			m_Frames[wt] = new CreditsScreen( this, "CreditsScreen" );
-			break;
-
-		case WT_BLOGPANEL:
-			m_Frames[wt] = new BlogScreen( this, "BlogScreen" );
 			break;
 
 		default:
